@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from os import getenv
 import datetime
 from redis import Redis
+from datetime import timedelta
 
 load_dotenv(verbose=True)
 
@@ -35,6 +36,12 @@ def check_session_valid():
     if not request.cookies.get('session_id') in session:
         redirect('/login')
 
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5)
+
 @app.route('/')
 def index():
     return redirect('/welcome')
@@ -55,6 +62,7 @@ def login():
 def welcome():
     session_id = request.cookies.get('session_id')
     app.logger.info(f"session_id z welcome: {session_id}")
+    username = None
     if session_id:
         if session_id in session:
             username = session[session_id]
@@ -65,6 +73,8 @@ def welcome():
         upload_token = create_upload_token().decode('ascii')
         return f"""{HTML}
     <h1>APP</h1>
+    <h2>Rozpoznano jako {username}.<h2>
+    <a href=”/logout”><input type=”button” value=”Wyloguj”></a>
     
     <form action="{SERVER}/upload" method="POST" enctype="multipart/form-data">
       <input type="file" name="file"/>
@@ -82,14 +92,16 @@ def auth():
 
     response = make_response('', 303)
 
-    db_password = users_db.get(username).decode("utf-8")
-    if db_password is not None and db_password == password:
-        uuid = uuid4()
-        session_id = str(uuid)
-        session[session_id] = username
-        app.logger.error(f"session_id z auth: {session_id}, uuid: {uuid}")
-        response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
-        response.headers["Location"] = "/welcome"
+    db_password = users_db.get(username)
+    if db_password is not None:
+        db_password = db_password.decode("utf-8")
+        if db_password == password:
+            uuid = uuid4()
+            session_id = str(uuid)
+            session[session_id] = username
+            app.logger.error(f"session_id z auth: {session_id}, uuid: {uuid}")
+            response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
+            response.headers["Location"] = "/welcome"
     else:
         app.logger.error(f"Nie rozpoznano {db_password} dla {username}. Powinno być {password}.")
         response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
