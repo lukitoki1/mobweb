@@ -1,6 +1,6 @@
 from jwt import encode
 from uuid import uuid4
-from flask import Flask, request, make_response, session
+from flask import Flask, request, make_response
 from dotenv import load_dotenv
 from os import getenv
 import datetime
@@ -22,25 +22,27 @@ INVALIDATE = -1
 
 # redis
 REDIS = getenv("REDIS_HOST")
-users_db = Redis(host=REDIS, port=6379, db=0)
-users_db.set('admin', 'password')
+users = Redis(host=REDIS, port=6379, db=0)
+users.set('admin', 'admin')
+users.set('kaminsl1', 'kaminski')
 
-#sessions
-app.config["SECRET_KEY"] = "OCML3BRawWEUeaxcuKHLpw"
-app.config['SESSION_TYPE'] = "redis"
-app.config['SESSION_REDIS'] = Redis(host=REDIS, port=6379, db=1)
+# sessions
+sessions = Redis(host=REDIS, port=6379, db=1)
 
 
 @app.before_request
 def check_session_valid():
-    if not request.cookies.get('session_id') in session:
+    app.logger.info(str(sessions))
+    session_id = request.cookies.get('session_id')
+    if session_id is None or session_id not in sessions:
         redirect('/login')
 
 
-@app.before_request
-def make_session_permanent():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=5)
+# @app.before_request
+# def make_session_permanent():
+#     session.permanent = True
+#     app.permanent_session_lifetime = timedelta(minutes=5)
+
 
 @app.route('/')
 def index():
@@ -61,11 +63,12 @@ def login():
 @app.route('/welcome')
 def welcome():
     session_id = request.cookies.get('session_id')
-    app.logger.info(f"session_id z welcome: {session_id}")
-    username = None
     if session_id:
-        if session_id in session:
-            username = session[session_id]
+        if sessions.exists(session_id):
+            username = sessions[session_id].decode("utf-8")
+            app.logger.error(f'username: {username}, session_id: {session_id}')
+        else:
+            return redirect('/login')
         # else:
         #     fid, content_type = '', 'text/plain'
         #
@@ -74,7 +77,7 @@ def welcome():
         return f"""{HTML}
     <h1>APP</h1>
     <h2>Rozpoznano jako {username}.<h2>
-    <a href=”/logout”><input type=”button” value=”Wyloguj”></a>
+    <a href="/logout">Wyloguj</a>
     
     <form action="{SERVER}/upload" method="POST" enctype="multipart/form-data">
       <input type="file" name="file"/>
@@ -92,19 +95,23 @@ def auth():
 
     response = make_response('', 303)
 
-    db_password = users_db.get(username)
+    db_password = users.get(username)
     if db_password is not None:
         db_password = db_password.decode("utf-8")
         if db_password == password:
+            app.logger.error(f'Udało się rozpoznać hasło.')
             uuid = uuid4()
             session_id = str(uuid)
-            session[session_id] = username
-            app.logger.error(f"session_id z auth: {session_id}, uuid: {uuid}")
+            app.logger.error(f'Username: {username}')
+
+            sessions.set(session_id, username, ex=datetime.timedelta(minutes=SESSION_TIME))
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
             response.headers["Location"] = "/welcome"
+        else:
+            # response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+            response.headers["Location"] = "/login"
     else:
-        app.logger.error(f"Nie rozpoznano {db_password} dla {username}. Powinno być {password}.")
-        response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+        # response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
         response.headers["Location"] = "/login"
 
     return response
@@ -113,9 +120,9 @@ def auth():
 @app.route('/logout')
 def logout():
     response = redirect("/login")
-    response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+    # response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
     session_id = request.cookies.get('session_id')
-    session.pop(session_id)
+    sessions.delete(session_id)
     return response
 
 
