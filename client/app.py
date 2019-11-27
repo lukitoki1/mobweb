@@ -1,8 +1,6 @@
 from jwt import encode
 from uuid import uuid4
-from flask import Flask
-from flask import request
-from flask import make_response
+from flask import Flask, request, make_response, session
 from dotenv import load_dotenv
 from os import getenv
 import datetime
@@ -10,29 +8,36 @@ from redis import Redis
 
 load_dotenv(verbose=True)
 
-session = {}
 HTML = """<!doctype html>
 <head><meta charset="utf-8"/></head>"""
 
 app = Flask(__name__)
-CDN = getenv("CDN_HOST")
-WEB = getenv("WEB_HOST")
+SERVER = getenv("SERVER_HOST")
+CLIENT = getenv("CLIENT_HOST")
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
-REDIS = getenv("REDIS_HOST")
 INVALIDATE = -1
 
-db = Redis(host=REDIS, port=6379)
-db.set('admin', 'password')
+# redis
+REDIS = getenv("REDIS_HOST")
+users_db = Redis(host=REDIS, port=6379, db=0)
+users_db.set('admin', 'password')
 
+#sessions
+app.config["SECRET_KEY"] = "OCML3BRawWEUeaxcuKHLpw"
+app.config['SESSION_TYPE'] = "redis"
+app.config['SESSION_REDIS'] = Redis(host=REDIS, port=6379, db=1)
+
+
+@app.before_request
+def check_session_valid():
+    if not request.cookies.get('session_id') in session:
+        redirect('/login')
 
 @app.route('/')
 def index():
-    session_id = request.cookies.get('session_id')
-    app.logger.error(f"session_id z index: {session_id}")
-    response = redirect("/welcome" if session_id else "/login")
-    return response
+    return redirect('/welcome')
 
 
 @app.route('/login')
@@ -49,23 +54,22 @@ def login():
 @app.route('/welcome')
 def welcome():
     session_id = request.cookies.get('session_id')
-    app.logger.error(f"session_id z welcome: {session_id}")
+    app.logger.info(f"session_id z welcome: {session_id}")
     if session_id:
         if session_id in session:
-            fid, content_type = session[session_id]
-        else:
-            fid, content_type = '', 'text/plain'
-
-        download_token = create_download_token(fid).decode('ascii')
+            username = session[session_id]
+        # else:
+        #     fid, content_type = '', 'text/plain'
+        #
+        # download_token = create_download_token(fid).decode('ascii')
         upload_token = create_upload_token().decode('ascii')
         return f"""{HTML}
     <h1>APP</h1>
-    <a href="{CDN}/download/{fid}?token={download_token}&content_type={content_type}">{fid}</a>
-
-    <form action="{CDN}/upload" method="POST" enctype="multipart/form-data">
+    
+    <form action="{SERVER}/upload" method="POST" enctype="multipart/form-data">
       <input type="file" name="file"/>
       <input type="hidden" name="token"    value="{upload_token}" />
-      <input type="hidden" name="callback" value="{WEB}/callback" />
+      <input type="hidden" name="callback" value="{CLIENT}/callback" />
       <input type="submit"/>
     </form> """
     return redirect("/login")
@@ -78,10 +82,11 @@ def auth():
 
     response = make_response('', 303)
 
-    db_password = db.get(username).decode("utf-8")
+    db_password = users_db.get(username).decode("utf-8")
     if db_password is not None and db_password == password:
         uuid = uuid4()
         session_id = str(uuid)
+        session[session_id] = username
         app.logger.error(f"session_id z auth: {session_id}, uuid: {uuid}")
         response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
         response.headers["Location"] = "/welcome"
@@ -97,6 +102,8 @@ def auth():
 def logout():
     response = redirect("/login")
     response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+    session_id = request.cookies.get('session_id')
+    session.pop(session_id)
     return response
 
 
@@ -106,15 +113,11 @@ def uploaded():
     app.logger.error(f"session_id z callback: {session_id}")
     fid = request.args.get('fid')
     err = request.args.get('error')
-    if not session_id:
-        return redirect("/login")
-
     if err:
         return f"<h1>APP</h1> Upload failed: {err}", 400
     if not fid:
         return f"<h1>APP</h1> Upload successfull, but no fid returned", 500
     content_type = request.args.get('content_type', 'text/plain')
-    session[session_id] = (fid, content_type)
     return f"<h1>APP</h1> User {session_id} uploaded {fid} ({content_type})", 200
 
 
