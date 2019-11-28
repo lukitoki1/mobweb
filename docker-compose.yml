@@ -5,35 +5,31 @@ services:
     container_name: nginx_container
     image: chaberb/nginx-ssl
     depends_on:
-      - client
-      - server
+      - web
+      - cdn
     ports:
       - "443:443"
     volumes:
       - ./nginx-uwsgi.conf:/etc/nginx/nginx.conf
 
-  client:
-    container_name: client_container
+  web:
+    container_name: web_container
     build:
-      context: ./client
+      context: ./web
       dockerfile: Dockerfile
     depends_on:
       - redis
-    environment:
-      - REDIS_HOST=redis
     volumes:
-      - ./client:/var/www/app
+      - ./web/container_data:/var/www/app
 
-  server:
-    container_name: server_container
+  cdn:
+    container_name: cdn_container
     image: chaberb/flask-jwt
     depends_on:
       - redis
-    environment:
-      - REDIS_HOST=redis
     volumes:
-      - ./server:/var/www/app
-      - /tmp:/tmp
+      - ./cdn:/var/www/app
+      - ./tmp:/tmp
 
   redis:
     container_name: redis_container
@@ -41,5 +37,5 @@ services:
     volumes:
       - redis_data:/data
 
-volumes:  
+volumes:
   redis_data:

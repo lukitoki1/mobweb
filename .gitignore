@@ -1,2 +1,2 @@
-L4/.idea/
-/L4/venv/
+**/__pycache__
+**/*.pyc
