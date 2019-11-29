@@ -6,7 +6,8 @@ from flask import render_template
 from dotenv import load_dotenv
 from os import getenv
 import datetime
-import redisHandler
+
+import db
 import sessionHandler
 import redis
 import jwt
@@ -26,11 +27,9 @@ JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
 INVALIDATE = -1
 
+users = db.Users()
+
 redis = redis.Redis(host="redis", port="6379")
-
-redisConn = redisHandler.RedisHandler(redis)
-redisConn.initUser()
-
 session = sessionHandler.SessionHandler(redis)
 
 
@@ -42,7 +41,7 @@ def index():
     return redirect("/index")
 
 
-# TODO jesli zalogowany to blokada loginu!
+# TODO block /login when user logged in.
 
 @app.route('/login', methods=['GET'])
 def login():
@@ -55,13 +54,13 @@ def welcome():
     if session_id:
         if session.checkSession(session_id):
             uid = session.getNicknameSession(session_id)
-            downloadToken = createDownloadToken(uid).decode('utf-8')
-            uploadToken = createUploadToken(uid).decode('utf-8')
-            listToken = createListToken(uid).decode('utf-8')
-            listOfFiles = json.loads(requests.get("http://cdn:5000/list/" + uid + "?token=" + listToken).content)
-            print(type(listOfFiles), flush=True)
-            return render_template("index.html", uid=uid, uploadToken=uploadToken, downloadToken=downloadToken,
-                                   listToken=listToken, listOfFiles=listOfFiles)
+            download_token = create_download_token(uid).decode('utf-8')
+            upload_token = create_upload_token(uid).decode('utf-8')
+            list_token = create_list_token(uid).decode('utf-8')
+            files_list = json.loads(requests.get("http://cdn:5000/list/" + uid + "?token=" + list_token).content)
+            print(type(files_list), flush=True)
+            return render_template("index.html", uid=uid, uploadToken=upload_token, downloadToken=download_token,
+                                   listToken=list_token, listOfFiles=files_list)
         else:
             response = redirect("/login")
             response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
@@ -76,7 +75,7 @@ def auth():
     if username is not "" and password is not "":
         response = make_response('', 303)
 
-        if redisConn.checkUser(username, password) is True:
+        if users.check_user(username, password):
             session_id = session.createSession(username)
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
             response.headers["Location"] = "/index"
@@ -116,17 +115,17 @@ def uploaded():
     return f"<h1>APP</h1> User {session_id} uploaded {uid} ({content_type})", 200
 
 
-def createDownloadToken(uid):
+def create_download_token(uid):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
     return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "download"}, JWT_SECRET, "HS256")
 
 
-def createUploadToken(uid):
+def create_upload_token(uid):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
     return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "upload"}, JWT_SECRET, "HS256")
 
 
-def createListToken(uid):
+def create_list_token(uid):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
     return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "list"}, JWT_SECRET, "HS256")
 

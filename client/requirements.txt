@@ -1,5 +1,0 @@
-PyJWT
-flask
-python-dotenv
-redis
-Flask-Session
