@@ -24,14 +24,18 @@ INVALIDATE = -1
 users = web_database.Users()
 session = web_database.Sessions()
 
+invalid_session_surpass_endpoints = ['login', 'auth']
+
 
 @app.before_request
 def check_session_valid():
+    if request.endpoint in invalid_session_surpass_endpoints:
+        return
     session_id = request.cookies.get('session_id')
     if session_id is None:
-        redirect('/login')
+        return redirect('/login')
     if not session.check(session_id):
-        invalidate_session()
+        return invalidate_session()
 
 
 @app.route('/')
@@ -46,17 +50,24 @@ def login():
 
 @app.route('/index')
 def welcome():
-    session_id = request.cookies.get('session_id')
-    if session.check(session_id):
-        username = session.get_username(session_id)
-        download_token = create_token(username, 'download').decode('utf-8')
-        upload_token = create_token(username, 'upload').decode('utf-8')
-        list_token = create_token(username, 'list').decode('utf-8')
-        files_list = json.loads(requests.get("http://cdn:5000/list/" + username + "?token=" + list_token).content)
-        return render_template("index.html", username=username, uploadToken=upload_token, downloadToken=download_token,
-                               listToken=list_token, listOfFiles=files_list)
-    else:
-        return invalidate_session()
+    username = get_username(request)
+    download_token = create_token(username, 'download').decode('utf-8')
+    files_list = get_files_list(username)
+    return render_template("index.html", downloadToken=download_token, listOfFiles=files_list, username=username)
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    f = request.files.get('file')
+    if f.filename == '':
+        return
+    username = get_username(request)
+    upload_token = create_token(username, 'upload').decode('utf-8')
+    result = requests.post('http://cdn:5000/upload', files={'file': (f.filename, f.stream, f.mimetype)},
+                           params={'username': username, 'token': upload_token,
+                                   'callback': "https://web.company.com/callback"})
+    app.logger.error(f'{result}')
+    return redirect('/index')
 
 
 @app.route('/auth', methods=['POST'])
@@ -82,12 +93,6 @@ def logout():
     return invalidate_session()
 
 
-def invalidate_session():
-    response = redirect("/login")
-    response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
-    return response
-
-
 @app.route('/callback')
 def callback():
     username = request.args.get('username')
@@ -103,9 +108,26 @@ def callback():
     return render_template('callback.html', communicate=communicate)
 
 
+def invalidate_session():
+    response = redirect("/login")
+    response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+    return response
+
+
+def get_username(fwd_request):
+    session_id = fwd_request.cookies.get('session_id')
+    return session.get_username(session_id)
+
+
+def get_files_list(username):
+    list_token = create_token(username, 'list').decode('utf-8')
+    return json.loads(requests.get("http://cdn:5000/list", params={'username': username, 'token': list_token}).content)
+
+
 def create_token(username, action):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": action}, JWT_SECRET, "HS256")
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": action}, JWT_SECRET,
+                      "HS256")
 
 
 def redirect(location):

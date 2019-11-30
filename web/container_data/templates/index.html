@@ -12,18 +12,15 @@
 <div>
     <ul class="no-bullets">
         {% for file in listOfFiles %}
-            <li><a class="list-group-item list-group-item-action"
+            <li><a class="list-group-item list-group-item-action" target="_blank"
                    href="https://cdn.company.com/files?token={{ downloadToken }}&content_type=multipart/form-data&filename={{ file }}&username={{ username }}">{{ file }}</a>
             </li>
         {% endfor %}
     </ul>
 </div>
 <div>
-    <form class="form" action="https://cdn.company.com/files" method="POST" enctype="multipart/form-data">
+    <form class="form" action="https://web.company.com/upload" method="POST" enctype="multipart/form-data">
         <input type="file" name="file"/>
-        <input type="hidden" name="token" value="{{ uploadToken }}"/>
-        <input type="hidden" name="callback" value="https://web.company.com/callback"/>
-        <input type="hidden" name="username" value="{{ username }}"/>
         <input type="submit"/>
     </form>
 </div>
