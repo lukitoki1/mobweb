@@ -64,10 +64,8 @@ def upload():
     username = get_username(request)
     upload_token = create_token(username, 'upload').decode('utf-8')
     result = requests.post('http://cdn:5000/upload', files={'file': (f.filename, f.stream, f.mimetype)},
-                           params={'username': username, 'token': upload_token,
-                                   'callback': "https://web.company.com/callback"})
-    app.logger.error(f'{result}')
-    return redirect('/index')
+                           params={'username': username, 'token': upload_token})
+    return render_template('callback.html', communicate=result.content.decode('utf-8'))
 
 
 @app.route('/auth', methods=['POST'])

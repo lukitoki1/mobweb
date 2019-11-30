@@ -26,7 +26,7 @@ def list():
         return '<h1>CDN</h1> Missing username', 404
     if token is None:
         return '<h1>CDN</h1> No token', 401
-    if not valid(token):
+    if not validate_token(token):
         return '<h1>CDN</h1> Invalid token', 401
     payload = jwt.decode(token, JWT_SECRET)
     if payload.get('username') != username or payload.get('action') != 'list':
@@ -43,11 +43,11 @@ def download():
     username = request.args.get('username')
     token = request.args.get('token')
     filename = request.args.get('filename')
-    if len(username) == 0:
+    if username is None:
         return '<h1>CDN</h1> Missing username', 404
     if token is None:
         return '<h1>CDN</h1> No token', 401
-    if not valid(token):
+    if not validate_token(token):
         return '<h1>CDN</h1> Invalid token', 401
     payload = jwt.decode(token, JWT_SECRET)
     if payload.get('username') != username or payload.get('action') != 'download':
@@ -60,33 +60,35 @@ def download():
 def upload():
     app.logger.error(f'data: {request.args}, file: {request.data.decode("utf-8")}')
     f = request.files.get('file')
-    t = request.args.get('token')
-    c = request.args.get('callback')
+    token = request.args.get('token')
     username = request.args.get('username')
-    # if f.filename is "":
-    #     return redirect(f"{c}?error=No+file+provided") if c \
-    #         else ('<h1>CDN</h1> No file provided', 400)
-    # if t is None:
-    #     return redirect(f"{c}?error=No+token+provided") if c \
-    #         else ('<h1>CDN</h1> No token provided', 401)
-    # if not valid(t):
-    #     return redirect(f"{c}?error=Invalid+token") if c \
-    #         else ('<h1>CDN</h1> Invalid token', 401)
-    # payload = jwt.decode(t, JWT_SECRET)
-    # if payload.get('username') != username or payload.get('action') != 'upload':
-    #     return '<h1>CDN</h1> Incorrect token payload', 401
 
-    content_type = "multipart/form-data"
+    valid, communicate = validate_args(username, token, 'upload')
+    if not valid:
+        return communicate
+    if f.filename is "":
+        return {'error': 'No file provided'}, 400
+
     files.upload(username, f.filename, f.read())
     f.close()
-    # return 'alamakota'
-    return make_response('File uploaded', 200)
-
-    # return redirect(f"{c}?username={username}&filename={f.filename}&content_type={content_type}") if c \
-    #     else (f'<h1>CDN</h1> Uploaded {username}', 200)
+    return 'File uploaded', 200
 
 
-def valid(token):
+def validate_args(username, token, action):
+    valid, communicate = True, ''
+    if username is None:
+        valid, communicate = False, ('Missing username', 404)
+    if token is None:
+        valid, communicate = False, ('No token', 401)
+    if not validate_token(token):
+        valid, communicate = False, ('Invalid token', 401)
+    payload = jwt.decode(token, JWT_SECRET)
+    if payload.get('username') != username or payload.get('action') != action:
+        valid, communicate = False, ('Incorrect token payload', 401)
+    return valid, communicate
+
+
+def validate_token(token):
     try:
         jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
     except jwt.InvalidTokenError as e:
