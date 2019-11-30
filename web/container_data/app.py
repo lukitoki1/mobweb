@@ -89,19 +89,18 @@ def invalidate_session():
 
 
 @app.route('/callback')
-def uploaded():
-    session_id = request.cookies.get('session_id')
+def callback():
     username = request.args.get('username')
     err = request.args.get('error')
-    if not session_id:
-        return redirect("/login")
 
     if err:
-        return f"<h1>APP</h1> Upload failed: {err}", 400
-    if not username:
-        return f"<h1>APP</h1> Upload successfull, but no username returned", 500
-    content_type = request.args.get('content_type', 'text/plain')
-    return f"<h1>APP</h1> User {session_id} uploaded {username} ({content_type})", 200
+        communicate = f'Upload failed: {err}'
+    else:
+        content_type = request.args.get('content_type')
+        filename = request.args.get('filename')
+        communicate = f'User {username} uploaded {filename} ({content_type})'
+
+    return render_template('callback.html', communicate=communicate)
 
 
 def create_token(username, action):

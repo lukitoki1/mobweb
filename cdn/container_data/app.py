@@ -6,7 +6,6 @@ from flask import send_file
 from dotenv import load_dotenv
 from os import getenv
 import json
-import os
 
 import cdn_database
 
@@ -75,13 +74,11 @@ def upload():
     if payload.get('username') != username or payload.get('action') != 'upload':
         return '<h1>CDN</h1> Incorrect token payload', 401
 
-    # TODO zrobic zamykanie zeby czekalo na save'a
     content_type = "multipart/form-data"
-    app.logger.error(f'username: {username}, filename: {f.filename}, file: {f}')
     files.upload(username, f.filename, f.read())
     f.close()
 
-    return redirect(f"{c}?username={username}&content_type={content_type}") if c \
+    return redirect(f"{c}?username={username}&filename={f.filename}&content_type={content_type}") if c \
         else (f'<h1>CDN</h1> Uploaded {username}', 200)
 
 
