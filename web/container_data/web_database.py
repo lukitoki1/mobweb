@@ -25,14 +25,14 @@ class Users:
 
 
 class Sessions:
+    exp = datetime.timedelta(minutes=5)
+
     def __init__(self):
         self.db = redis.Redis(host='redis', port=6379, db=1)
 
-    def create(self, login):
+    def create(self, username):
         session_id = str(uuid4())
-        exp = datetime.timedelta(minutes=5)
-        # exp = str(exp)
-        self.db.set(session_id, login, ex=exp)
+        self.db.set(session_id, username, ex=Sessions.exp)
         return session_id
 
     def check(self, session_id):
@@ -41,9 +41,12 @@ class Sessions:
         else:
             return True
 
-    def invalidate(self, id):
-        self.db.hdel('exp', id)
-        self.db.hdel('username', id)
+    def update(self, session_id):
+        username = self.get_username(session_id)
+        self.db.set(session_id, username, Sessions.exp)
+
+    def invalidate(self, session_id):
+        self.db.delete(session_id)
 
     def get_username(self, session_id):
         username = self.db.get(session_id)
