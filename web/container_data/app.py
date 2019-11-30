@@ -1,4 +1,3 @@
-from uuid import uuid4
 from flask import Flask
 from flask import request
 from flask import make_response
@@ -8,7 +7,6 @@ from os import getenv
 import datetime
 
 import db
-import redis
 import jwt
 import requests
 import json
@@ -30,11 +28,15 @@ users = db.Users()
 session = db.Sessions()
 
 
+@app.before_request
+def check_session_valid():
+    session_id = request.cookies.get('session_id')
+    if not session.check(session_id):
+        redirect('/login')
+
+
 @app.route('/')
 def index():
-    session_id = request.cookies.get('session_id')
-    if session_id is None:
-        return redirect("/login")
     return redirect("/index")
 
 
@@ -48,21 +50,20 @@ def login():
 @app.route('/index')
 def welcome():
     session_id = request.cookies.get('session_id')
-    if session_id:
-        if session.check_session(session_id):
-            uid = session.get_username(session_id)
-            download_token = create_download_token(uid).decode('utf-8')
-            upload_token = create_upload_token(uid).decode('utf-8')
-            list_token = create_list_token(uid).decode('utf-8')
-            files_list = json.loads(requests.get("http://cdn:5000/list/" + uid + "?token=" + list_token).content)
-            print(type(files_list), flush=True)
-            return render_template("index.html", uid=uid, uploadToken=upload_token, downloadToken=download_token,
-                                   listToken=list_token, listOfFiles=files_list)
-        else:
-            response = redirect("/login")
-            response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
-            return response
-    return redirect("/login")
+    if session.check(session_id):
+        app.logger.error(str(session.db))
+        uid = session.get_username(session_id)
+        download_token = create_download_token(uid).decode('utf-8')
+        upload_token = create_upload_token(uid).decode('utf-8')
+        list_token = create_list_token(uid).decode('utf-8')
+        files_list = json.loads(requests.get("http://cdn:5000/list/" + uid + "?token=" + list_token).content)
+        print(type(files_list), flush=True)
+        return render_template("index.html", uid=uid, uploadToken=upload_token, downloadToken=download_token,
+                               listToken=list_token, listOfFiles=files_list)
+    else:
+        response = redirect("/login")
+        response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
+        return response
 
 
 @app.route('/auth', methods=['POST'])
@@ -72,8 +73,8 @@ def auth():
     if username is not "" and password is not "":
         response = make_response('', 303)
 
-        if users.check_user(username, password):
-            session_id = session.create_session(username)
+        if users.check(username, password):
+            session_id = session.create(username)
             response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
             response.headers["Location"] = "/index"
         else:
@@ -88,9 +89,9 @@ def auth():
 def logout():
     session_id = request.cookies.get('session_id')
     if session_id:
-        session.delete_session(session_id)
+        session.invalidate(session_id)
         response = redirect("/login")
-        response.set_cookie("session_id", "LOGGED_OUT", max_age=1)
+        response.set_cookie("session_id", "INVALIDATE", max_age=1)
         return response
     return redirect("/login")
 

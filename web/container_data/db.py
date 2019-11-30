@@ -18,7 +18,7 @@ class Users:
         self.db.set('admin', 'admin')
         self.db.set('kaminsl1', 'kaminski')
 
-    def check_user(self, login, password):
+    def check(self, login, password):
         if self.db.get(login) is None or self.db.get(login).decode("UTF-8") != password:
             return False
         return True
@@ -28,26 +28,25 @@ class Sessions:
     def __init__(self):
         self.db = redis.Redis(host='redis', port=6379, db=1)
 
-    def create_session(self, login):
+    def create(self, login):
         session_id = str(uuid4())
-        exp = datetime.datetime.now() + datetime.timedelta(minutes=5)
-        exp = str(exp)
-        self.db.hset('exp', session_id, exp)
-        self.db.hset('username', session_id, login)
+        exp = datetime.timedelta(minutes=5)
+        # exp = str(exp)
+        self.db.set(session_id, login, ex=exp)
         return session_id
 
-    def check_session(self, id):
-        session = self.db.hget('username', id)
-        if session is not None:
-            session_exp = datetime.datetime.strptime(self.db.hget('exp', id).decode("UTF-8"),
-                                                 '%Y-%m-%d %H:%M:%S.%f')
-            if session_exp > datetime.datetime.now():
-                return True
-        return False
+    def check(self, session_id):
+        if session_id is None or session_id not in self.db:
+            return False
+        else:
+            return True
 
-    def delete_session(self, id):
+    def invalidate(self, id):
         self.db.hdel('exp', id)
         self.db.hdel('username', id)
 
-    def get_username(self, id):
-        return self.db.hget('username', id).decode("UTF-8")
+    def get_username(self, session_id):
+        username = self.db.get(session_id)
+        if username is not None:
+            return username.decode('utf-8')
+        return None
