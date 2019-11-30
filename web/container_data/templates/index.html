@@ -5,32 +5,33 @@
     <title>Repozytorium plików</title>
 </head>
 <body>
-        <div class="row">
-            <div class="col-3">
-            </div>
-            <div class="col-6">
-                <div class="background">
-                <h2 class="title">Twoje pliki</h2>
-                <div  class="list-group">
-                    {% for file in listOfFiles %}
-                    <a class="list-group-item list-group-item-action" href="https://cdn.company.com/files?token={{downloadToken}}&content_type=multipart/form-data&filename={{file}}&uid={{ uid }}">{{ file }}</a>
-                    {% endfor %}
-                    <form class="form" action="https://cdn.company.com/files" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="file"/>
-                        <input type="hidden" name="token"    value="{{uploadToken}}" />
-                        <input type="hidden" name="callback" value="https://web.company.com/callback" />
-                        <input type="hidden" name="uid" value="{{ uid }}"/>
-                        <input type="submit"/>
-                    </form>
-                </div>
-                </div >
-            </div>
-            <div class="col-3">
-                <div class="info">
-                    You are now logged in as: {{ uid }}
-                    <a href="/logout">(Wyloguj)</a>
-                </div>
+<div class="row">
+    <div class="col-3">
+    </div>
+    <div class="col-6">
+        <div class="background">
+            <h2 class="title">Twoje pliki</h2>
+            <div class="list-group">
+                {% for file in listOfFiles %}
+                    <a class="list-group-item list-group-item-action"
+                       href="https://cdn.company.com/files?token={{ downloadToken }}&content_type=multipart/form-data&filename={{ file }}&username={{ username }}">{{ file }}</a>
+                {% endfor %}
+                <form class="form" action="https://cdn.company.com/files" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="file"/>
+                    <input type="hidden" name="token" value="{{ uploadToken }}"/>
+                    <input type="hidden" name="callback" value="https://web.company.com/callback"/>
+                    <input type="hidden" name="username" value="{{ username }}"/>
+                    <input type="submit"/>
+                </form>
             </div>
         </div>
+    </div>
+    <div class="col-3">
+        <div class="info">
+            You are now logged in as: {{ uid }}
+            <a href="/logout">(Wyloguj)</a>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -24,11 +24,13 @@ services:
 
   cdn:
     container_name: cdn_container
-    image: chaberb/flask-jwt
+    build:
+      context: ./cdn
+      dockerfile: Dockerfile
     depends_on:
       - redis
     volumes:
-      - ./cdn:/var/www/app
+      - ./cdn/container_data:/var/www/app
       - ./tmp:/tmp
 
   redis:

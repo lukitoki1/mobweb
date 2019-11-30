@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from os import getenv
 import datetime
 
-import db
+import web_database
 import jwt
 import requests
 import json
@@ -24,8 +24,8 @@ JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
 INVALIDATE = -1
 
-users = db.Users()
-session = db.Sessions()
+users = web_database.Users()
+session = web_database.Sessions()
 
 
 @app.before_request
@@ -52,13 +52,13 @@ def welcome():
     session_id = request.cookies.get('session_id')
     if session.check(session_id):
         app.logger.error(str(session.db))
-        uid = session.get_username(session_id)
-        download_token = create_download_token(uid).decode('utf-8')
-        upload_token = create_upload_token(uid).decode('utf-8')
-        list_token = create_list_token(uid).decode('utf-8')
-        files_list = json.loads(requests.get("http://cdn:5000/list/" + uid + "?token=" + list_token).content)
+        username = session.get_username(session_id)
+        download_token = create_download_token(username).decode('utf-8')
+        upload_token = create_upload_token(username).decode('utf-8')
+        list_token = create_list_token(username).decode('utf-8')
+        files_list = json.loads(requests.get("http://cdn:5000/list/" + username + "?token=" + list_token).content)
         print(type(files_list), flush=True)
-        return render_template("index.html", uid=uid, uploadToken=upload_token, downloadToken=download_token,
+        return render_template("index.html", username=username, uploadToken=upload_token, downloadToken=download_token,
                                listToken=list_token, listOfFiles=files_list)
     else:
         response = redirect("/login")
@@ -99,33 +99,38 @@ def logout():
 @app.route('/callback')
 def uploaded():
     session_id = request.cookies.get('session_id')
-    uid = request.args.get('uid')
+    username = request.args.get('username')
     err = request.args.get('error')
     if not session_id:
         return redirect("/login")
 
     if err:
         return f"<h1>APP</h1> Upload failed: {err}", 400
-    if not uid:
-        return f"<h1>APP</h1> Upload successfull, but no uid returned", 500
+    if not username:
+        return f"<h1>APP</h1> Upload successfull, but no username returned", 500
     content_type = request.args.get('content_type', 'text/plain')
-    # session[session_id] = (uid, content_type)
-    return f"<h1>APP</h1> User {session_id} uploaded {uid} ({content_type})", 200
+    # session[session_id] = (username, content_type)
+    return f"<h1>APP</h1> User {session_id} uploaded {username} ({content_type})", 200
 
 
-def create_download_token(uid):
+def create_token(username, action):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "download"}, JWT_SECRET, "HS256")
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": "download"}, JWT_SECRET, "HS256")
 
 
-def create_upload_token(uid):
+def create_download_token(username):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "upload"}, JWT_SECRET, "HS256")
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": "download"}, JWT_SECRET, "HS256")
 
 
-def create_list_token(uid):
+def create_upload_token(username):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "uid": uid, "action": "list"}, JWT_SECRET, "HS256")
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": "upload"}, JWT_SECRET, "HS256")
+
+
+def create_list_token(username):
+    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": "list"}, JWT_SECRET, "HS256")
 
 
 def redirect(location):

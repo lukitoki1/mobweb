@@ -3,3 +3,4 @@ flask
 redis
 pyjwt
 requests
+flask-cors
