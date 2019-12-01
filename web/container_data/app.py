@@ -15,7 +15,6 @@ load_dotenv(verbose=True)
 
 app = Flask(__name__)
 CDN = getenv("CDN_HOST")
-WEB = getenv("WEB_HOST")
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
@@ -48,6 +47,21 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/auth', methods=['POST'])
+def auth():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    if username is "" or password is "":
+        return redirect('/login')
+    if users.check(username, password):
+        session_id = session.create(username)
+        response = redirect('/index')
+        response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
+    else:
+        response = invalidate_session()
+    return response
+
+
 @app.route('/index')
 def welcome():
     username = get_username(request)
@@ -68,29 +82,6 @@ def upload():
     return render_template('callback.html', communicate=result.content.decode('utf-8'))
 
 
-@app.route('/auth', methods=['POST'])
-def auth():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    if username is "" or password is "":
-        return redirect('/login')
-    if users.check(username, password):
-        session_id = session.create(username)
-        response = redirect('/index')
-        response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
-    else:
-        response = invalidate_session()
-    return response
-
-
-@app.route('/logout')
-def logout():
-    session_id = request.cookies.get('session_id')
-    if session_id:
-        session.invalidate(session_id)
-    return invalidate_session()
-
-
 @app.route('/callback')
 def callback():
     username = request.args.get('username')
@@ -104,6 +95,14 @@ def callback():
         communicate = f'User {username} uploaded {filename} ({content_type})'
 
     return render_template('callback.html', communicate=communicate)
+
+
+@app.route('/logout')
+def logout():
+    session_id = request.cookies.get('session_id')
+    if session_id:
+        session.invalidate(session_id)
+    return invalidate_session()
 
 
 def invalidate_session():

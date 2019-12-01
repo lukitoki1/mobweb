@@ -22,15 +22,9 @@ files = cdn_database.Files()
 def list():
     username = request.args.get('username')
     token = request.args.get('token')
-    if username is None:
-        return '<h1>CDN</h1> Missing username', 404
-    if token is None:
-        return '<h1>CDN</h1> No token', 401
-    if not validate_token(token):
-        return '<h1>CDN</h1> Invalid token', 401
-    payload = jwt.decode(token, JWT_SECRET)
-    if payload.get('username') != username or payload.get('action') != 'list':
-        return '<h1>CDN</h1> Incorrect token payload', 401
+    valid, communicate = validate_args(username, token, 'list')
+    if not valid:
+        return communicate
 
     files_list = files.list(username)
     if files_list is None or len(files_list) == 0:
@@ -43,15 +37,10 @@ def download():
     username = request.args.get('username')
     token = request.args.get('token')
     filename = request.args.get('filename')
-    if username is None:
-        return '<h1>CDN</h1> Missing username', 404
-    if token is None:
-        return '<h1>CDN</h1> No token', 401
-    if not validate_token(token):
-        return '<h1>CDN</h1> Invalid token', 401
-    payload = jwt.decode(token, JWT_SECRET)
-    if payload.get('username') != username or payload.get('action') != 'download':
-        return '<h1>CDN</h1> Incorrect token payload', 401
+    valid, communicate = validate_args(username, token, 'download')
+    if not valid:
+        return communicate
+
     file = files.download(username, filename)
     return send_file(file, attachment_filename=filename, as_attachment=True)
 
@@ -67,7 +56,7 @@ def upload():
     if not valid:
         return communicate
     if f.filename is "":
-        return {'error': 'No file provided'}, 400
+        return 'No file provided', 400
 
     files.upload(username, f.filename, f.read())
     f.close()
@@ -75,24 +64,22 @@ def upload():
 
 
 def validate_args(username, token, action):
-    valid, communicate = True, ''
     if username is None:
-        valid, communicate = False, ('Missing username', 404)
+        return False, ('Missing username', 404)
     if token is None:
-        valid, communicate = False, ('No token', 401)
+        return False, ('No token', 401)
     if not validate_token(token):
-        valid, communicate = False, ('Invalid token', 401)
+        return False, ('Invalid token', 401)
     payload = jwt.decode(token, JWT_SECRET)
     if payload.get('username') != username or payload.get('action') != action:
-        valid, communicate = False, ('Incorrect token payload', 401)
-    return valid, communicate
+        return False, ('Incorrect token payload', 401)
+    return True, ''
 
 
 def validate_token(token):
     try:
         jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
     except jwt.InvalidTokenError as e:
-        app.logger.error(str(e))
         return False
     return True
 
