@@ -10,11 +10,13 @@ import json
 import cdn_database
 
 load_dotenv(verbose=True)
+JWT_SECRET = getenv('JWT_SECRET')
+REDIS_HOST = getenv('REDIS_HOST')
+REDIS_PORT = int(getenv('REDIS_PORT'))
 
 app = Flask(__name__)
-JWT_SECRET = getenv('JWT_SECRET')
 
-files = cdn_database.Files()
+files = cdn_database.Files(REDIS_HOST, REDIS_PORT)
 
 
 @app.route('/list', methods=['GET'])

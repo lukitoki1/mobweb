@@ -1,14 +1,10 @@
 import io
-from os import getenv
-
 import redis
-
-REDIS = getenv('REDIS_HOST')
 
 
 class Files:
-    def __init__(self):
-        self.db = redis.Redis(host='redis', port=6379, db=2)
+    def __init__(self, host, port):
+        self.db = redis.Redis(host=host, port=port, db=2)
 
     def upload(self, username, filename, file):
         self.db.hset(username, filename, file)

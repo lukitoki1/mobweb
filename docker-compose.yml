@@ -31,7 +31,6 @@ services:
       - redis
     volumes:
       - ./cdn/container_data:/var/www/app
-      - ./tmp:/tmp
 
   redis:
     container_name: redis_container

@@ -1,4 +1,4 @@
-from flask import Flask, send_file
+from flask import Flask, send_file, flash
 from flask import request
 from flask import make_response
 from flask import render_template
@@ -13,17 +13,19 @@ import requests
 import json
 
 load_dotenv(verbose=True)
-
-app = Flask(__name__)
 CDN = getenv("CDN_HOST")
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
 INVALIDATE = -1
+REDIS_HOST = getenv('REDIS_HOST')
+REDIS_PORT = int(getenv('REDIS_PORT'))
 
-users = web_database.Users()
-session = web_database.Sessions()
+app = Flask(__name__)
 
+users = web_database.Users(REDIS_HOST, REDIS_PORT)
+
+session = web_database.Sessions(REDIS_HOST, REDIS_PORT)
 invalid_session_surpass_endpoints = ['login', 'auth']
 
 
@@ -32,8 +34,6 @@ def check_session_valid():
     if request.endpoint in invalid_session_surpass_endpoints:
         return
     session_id = request.cookies.get('session_id')
-    if session_id is None:
-        return redirect('/login')
     if not session.check(session_id):
         return invalidate_session()
 
@@ -73,13 +73,24 @@ def welcome():
 @app.route('/upload', methods=['POST'])
 def upload():
     f = request.files.get('file')
-    if f.filename == '':
-        return
     username = get_username(request)
     upload_token = create_token(username, 'upload').decode('utf-8')
     result = requests.post('http://cdn:5000/upload', files={'file': (f.filename, f.stream, f.mimetype)},
                            params={'username': username, 'token': upload_token})
+    app.logger.error(f'{result.status_code, type(result.status_code)}')
     return render_template('callback.html', communicate=result.content.decode('utf-8'))
+
+
+@app.route('/download', methods=['GET'])
+def download():
+    filename = request.args.get('filename')
+    username = get_username(request)
+    download_token = create_token(username, 'download').decode('utf-8')
+    response = requests.get('http://cdn:5000/download',
+                            params={'username': username, 'token': download_token, 'filename': filename})
+    if response.status_code is not 200:
+        return render_template('callback.html', communicate=response.content.decode('utf-8'))
+    return send_file(io.BytesIO(response.content), attachment_filename=filename, as_attachment=True)
 
 
 @app.route('/callback')
@@ -95,19 +106,6 @@ def callback():
         communicate = f'User {username} uploaded {filename} ({content_type})'
 
     return render_template('callback.html', communicate=communicate)
-
-
-@app.route('/download', methods=['GET'])
-def download():
-    filename = request.args.get('filename')
-    if filename == '':
-        return
-    username = get_username(request)
-    download_token = create_token(username, 'download').decode('utf-8')
-    response = requests.get('http://cdn:5000/download', params={'username': username, 'token': download_token, 'filename': filename})
-    app.logger.error(response)
-    app.logger.error(response.content)
-    return send_file(io.BytesIO(response.content), attachment_filename=filename, as_attachment=True)
 
 
 @app.route('/logout')
@@ -131,7 +129,10 @@ def get_username(fwd_request):
 
 def get_files_list(username):
     list_token = create_token(username, 'list').decode('utf-8')
-    return json.loads(requests.get("http://cdn:5000/list", params={'username': username, 'token': list_token}).content)
+    response = requests.get("http://cdn:5000/list", params={'username': username, 'token': list_token})
+    if response.status_code is not 200:
+        return render_template('callback.html', communicate=response.content.decode('utf-8'))
+    return json.loads(response.content)
 
 
 def create_token(username, action):

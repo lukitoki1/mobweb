@@ -1,22 +1,17 @@
 import datetime
-from os import getenv
 from uuid import uuid4
-
 import redis
-
-REDIS = getenv('REDIS_HOST')
 
 
 class Users:
 
-    def __init__(self):
-        self.db = redis.Redis(host='redis', port=6379, db=0)
-        self.populate_users()
+    def __init__(self, host, port):
+        self.db = redis.Redis(host=host, port=port, db=0)
+        self.populate()
 
-    def populate_users(self):
+    def populate(self):
         self.db.set("test", "123")
         self.db.set('admin', 'admin')
-        self.db.set('kaminsl1', 'kaminski')
 
     def check(self, login, password):
         if self.db.get(login) is None or self.db.get(login).decode("UTF-8") != password:
@@ -27,8 +22,8 @@ class Users:
 class Sessions:
     exp = datetime.timedelta(minutes=5)
 
-    def __init__(self):
-        self.db = redis.Redis(host='redis', port=6379, db=1)
+    def __init__(self, host, port):
+        self.db = redis.Redis(host=host, port=port, db=1)
 
     def create(self, username):
         session_id = str(uuid4())
@@ -41,7 +36,7 @@ class Sessions:
         else:
             return True
 
-    def update(self, session_id):
+    def extend(self, session_id):
         username = self.get_username(session_id)
         self.db.set(session_id, username, Sessions.exp)
 
