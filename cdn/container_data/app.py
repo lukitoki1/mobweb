@@ -1,5 +1,4 @@
 import jwt
-import requests
 from flask import Flask
 from flask import request
 from flask import make_response
@@ -32,7 +31,7 @@ def list():
     return json.dumps(files_list)
 
 
-@app.route('/files', methods=['GET'])
+@app.route('/download', methods=['GET'])
 def download():
     username = request.args.get('username')
     token = request.args.get('token')
@@ -42,7 +41,7 @@ def download():
         return communicate
 
     file = files.download(username, filename)
-    return send_file(file, attachment_filename=filename, as_attachment=True)
+    return send_file(file, attachment_filename=filename)
 
 
 @app.route('/upload', methods=['POST'])

@@ -1,10 +1,11 @@
-from flask import Flask
+from flask import Flask, send_file
 from flask import request
 from flask import make_response
 from flask import render_template
 from dotenv import load_dotenv
 from os import getenv
 import datetime
+import io
 
 import web_database
 import jwt
@@ -65,9 +66,8 @@ def auth():
 @app.route('/index')
 def welcome():
     username = get_username(request)
-    download_token = create_token(username, 'download').decode('utf-8')
     files_list = get_files_list(username)
-    return render_template("index.html", downloadToken=download_token, listOfFiles=files_list, username=username)
+    return render_template("index.html", listOfFiles=files_list, username=username)
 
 
 @app.route('/upload', methods=['POST'])
@@ -95,6 +95,19 @@ def callback():
         communicate = f'User {username} uploaded {filename} ({content_type})'
 
     return render_template('callback.html', communicate=communicate)
+
+
+@app.route('/download', methods=['GET'])
+def download():
+    filename = request.args.get('filename')
+    if filename == '':
+        return
+    username = get_username(request)
+    download_token = create_token(username, 'download').decode('utf-8')
+    response = requests.get('http://cdn:5000/download', params={'username': username, 'token': download_token, 'filename': filename})
+    app.logger.error(response)
+    app.logger.error(response.content)
+    return send_file(io.BytesIO(response.content), attachment_filename=filename, as_attachment=True)
 
 
 @app.route('/logout')

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <title>File Service</title>
-    <link href="../style/style.css" rel="stylesheet" type="text/css">
+    <link href="../static/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 <div>
@@ -13,7 +13,7 @@
     <ul class="no-bullets">
         {% for file in listOfFiles %}
             <li><a class="list-group-item list-group-item-action" target="_blank"
-                   href="https://cdn.company.com/files?token={{ downloadToken }}&content_type=multipart/form-data&filename={{ file }}&username={{ username }}">{{ file }}</a>
+                   href="https://web.company.com/download?filename={{ file }}">{{ file }}</a>
             </li>
         {% endfor %}
     </ul>
