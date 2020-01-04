@@ -1,8 +1,5 @@
 import jwt
-from flask import Flask
-from flask import request
-from flask import make_response
-from flask import send_file
+from flask import Flask, request, make_response, send_file
 from dotenv import load_dotenv
 from os import getenv
 import json
@@ -19,43 +16,42 @@ app = Flask(__name__)
 files = cdn_database.Files(REDIS_HOST, REDIS_PORT)
 
 
-@app.route('/list', methods=['GET'])
+@app.route('/', methods=['GET'])
 def list():
-    username = request.args.get('username')
-    token = request.args.get('token')
-    valid, communicate = validate_args(username, token, 'list')
+    token = request.headers.get('Authentication')
+    valid, message = validate_and_parse_token(token, 'list')
     if not valid:
-        return communicate
+        return message
 
+    username, action = message
     files_list = files.list(username)
     if files_list is None or len(files_list) == 0:
         return json.dumps([])
     return json.dumps(files_list)
 
 
-@app.route('/download', methods=['GET'])
-def download():
-    username = request.args.get('username')
-    token = request.args.get('token')
-    filename = request.args.get('filename')
-    valid, communicate = validate_args(username, token, 'download')
+@app.route('/<filename>', methods=['GET'])
+def download(filename):
+    token = request.headers.get('Authentication')
+    valid, message = validate_and_parse_token(token, 'download')
     if not valid:
-        return communicate
+        return message
 
+    username, action = message
     file = files.download(username, filename)
     return send_file(file, attachment_filename=filename)
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/', methods=['POST'])
 def upload():
-    app.logger.error(f'data: {request.args}, file: {request.data.decode("utf-8")}')
     f = request.files.get('file')
-    token = request.args.get('token')
-    username = request.args.get('username')
+    token = request.headers.get('Authentication')
 
-    valid, communicate = validate_args(username, token, 'upload')
+    valid, message = validate_and_parse_token(token, 'upload')
     if not valid:
-        return communicate
+        return message
+
+    username, action = message
     if f.filename is "":
         return 'No file provided', 400
 
@@ -64,25 +60,38 @@ def upload():
     return 'File uploaded', 200
 
 
-def validate_args(username, token, action):
-    if username is None:
-        return False, ('Missing username', 404)
+@app.route('/<filename>', methods=['DELETE'])
+def delete(filename):
+    token = request.headers.get('Authentication')
+    valid, message = validate_and_parse_token(token, 'delete')
+    if not valid:
+        return message
+
+    username, action = message
+    files.delete(username, filename)
+    return 'File deleted', 200
+
+
+def validate_and_parse_token(token, action_context):
     if token is None:
         return False, ('No token', 401)
-    if not validate_token(token):
-        return False, ('Invalid token', 401)
-    payload = jwt.decode(token, JWT_SECRET)
-    if payload.get('username') != username or payload.get('action') != action:
-        return False, ('Incorrect token payload', 401)
-    return True, ''
 
-
-def validate_token(token):
     try:
-        jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-    except jwt.InvalidTokenError as e:
-        return False
-    return True
+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.InvalidTokenError:
+        return False, ('Invalid token', 401)
+
+    username = payload.get('username')
+    if username is None:
+        return False, ('Missing username', 404)
+
+    action = payload.get('action')
+    if action is None:
+        return False, ('Missing action', 404)
+    if action != action_context:
+        return False, ('Action specified in the token does not match the action expected for the URL', 401)
+
+    return True, (username, action)
 
 
 def redirect(location):

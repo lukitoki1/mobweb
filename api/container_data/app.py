@@ -24,7 +24,6 @@ app = Flask(__name__)
 
 users = api_database.Users(REDIS_HOST, REDIS_PORT)
 
-session = api_database.Sessions(REDIS_HOST, REDIS_PORT)
 invalid_session_surpass_endpoints = ['login', 'auth']
 
 
@@ -33,8 +32,7 @@ def check_session_valid():
     if request.endpoint in invalid_session_surpass_endpoints:
         return
     session_id = request.cookies.get('session_id')
-    if not session.check(session_id):
-        return invalidate_session()
+    return invalidate_session()
 
 
 @app.route('/')
@@ -108,8 +106,6 @@ def callback():
 @app.route('/logout')
 def logout():
     session_id = request.cookies.get('session_id')
-    if session_id:
-        session.invalidate(session_id)
     return invalidate_session()
 
 
@@ -121,7 +117,6 @@ def invalidate_session():
 
 def get_username(fwd_request):
     session_id = fwd_request.cookies.get('session_id')
-    return session.get_username(session_id)
 
 
 def get_files_list(username):

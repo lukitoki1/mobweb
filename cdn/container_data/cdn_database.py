@@ -16,3 +16,6 @@ class Files:
     def download(self, username, filename):
         binary_file = self.db.hget(username, filename)
         return io.BytesIO(binary_file)
+
+    def delete(self, username, filename):
+        self.db.hdel(username, filename)
