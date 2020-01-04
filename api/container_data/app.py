@@ -1,4 +1,4 @@
-from flask import Flask, send_file, flash
+from flask import Flask, send_file
 from flask import request
 from flask import make_response
 from flask import render_template
@@ -12,7 +12,6 @@ import jwt
 import requests
 import json
 
-load_dotenv(verbose=True)
 CDN = getenv("CDN_HOST")
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")

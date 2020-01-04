@@ -2,7 +2,6 @@ from flask import Flask, send_file
 from flask import request
 from flask import make_response
 from flask import render_template
-from dotenv import load_dotenv
 from os import getenv
 import datetime
 import io
@@ -12,7 +11,6 @@ import jwt
 import requests
 import json
 
-load_dotenv(verbose=True)
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
@@ -73,8 +71,8 @@ def upload():
     f = request.files.get('file')
     username = get_username(request)
     upload_token = create_token(username, 'upload').decode('utf-8')
-    result = requests.post('http://cdn:5000/', files={'file': (f.filename, f.stream, f.mimetype)},
-                           headers={'Authentication': upload_token})
+    result = requests.post('http://cdn:5000/files/', files={'file': (f.filename, f.stream, f.mimetype)},
+                           headers={'Authorization': upload_token})
     return render_template('callback.html', communicate=result.content.decode('utf-8'))
 
 
@@ -83,8 +81,8 @@ def download():
     filename = request.args.get('filename')
     username = get_username(request)
     download_token = create_token(username, 'download').decode('utf-8')
-    response = requests.get('http://cdn:5000/', params={'filename': filename},
-                            headers={'Authentication': download_token})
+    response = requests.get('http://cdn:5000/files/', params={'filename': filename},
+                            headers={'Authorization': download_token})
     if response.status_code is not 200:
         return render_template('callback.html', communicate=response.content.decode('utf-8'))
     return send_file(io.BytesIO(response.content), attachment_filename=filename, as_attachment=True)
@@ -111,7 +109,7 @@ def get_username(fwd_request):
 
 def get_files_list(username):
     list_token = create_token(username, 'list').decode('utf-8')
-    response = requests.get("http://cdn:5000/", headers={"Authentication": list_token})
+    response = requests.get("http://cdn:5000/files/", headers={"Authorization": list_token})
     if response.status_code is not 200:
         return render_template('callback.html', communicate=response.content.decode('utf-8'))
     return json.loads(response.content)

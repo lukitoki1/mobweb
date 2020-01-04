@@ -47,7 +47,6 @@ services:
     env_file:
       - cdn/container_data/.env
       - .env/mongo.env
-      - .env/redis.env
     depends_on:
       - redis
     volumes:
