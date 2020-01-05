@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8"/>
+    <title>File Service</title>
+</head>
+<body>
+<div>
+    <h2 class="title">New Publication</h2>
+</div>
+<div class="container">
+    <form class="form" action="https://web.company.com/publications/upload/" method="POST">
+        <ul class="no-bullets">
+            <li>
+                <label for="title">Title</label>
+                <input id="title" type="text" name="title" class="fieldInput"/>
+            </li>
+            <li>
+                <label for="authors">Authors</label>
+                <input id="authors" type="text" name="authors" class="fieldInput"/>
+            </li>
+            <li>
+                <label for="year">Year</label>
+                <input id="year" type="text" name="year" class="fieldInput"/>
+            </li>
+        </ul>
+        <input type="submit" class="button" id="sendButton" value="Submit"/>
+    </form>
+</div>
+<div>
+    <h3>Logged in as: {{ username }}</h3>
+    <a href="https://web.company.com/logout">
+        <button>Sign out</button>
+    </a>
+</div>
+</body>
+</html>

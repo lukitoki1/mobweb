@@ -5,3 +5,7 @@
 li {
     list-style-type: none;
 }
+
+.title {
+    max-width: 30%;
+}
