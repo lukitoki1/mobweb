@@ -19,7 +19,7 @@ services:
       context: ./api
       dockerfile: Dockerfile
     env_file:
-      - api/container_data/.env
+      - api/.env
       - .env/redis.env
     depends_on:
       - redis
@@ -32,7 +32,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
     env_file:
-      - web/container_data/.env
+      - web/.env
       - .env/redis.env
     depends_on:
       - redis
@@ -45,7 +45,7 @@ services:
       context: ./cdn
       dockerfile: Dockerfile
     env_file:
-      - cdn/container_data/.env
+      - cdn/.env
       - .env/mongo.env
     depends_on:
       - redis

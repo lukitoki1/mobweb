@@ -1,13 +1,10 @@
-import jwt
-from flask import request, make_response, send_file, Blueprint, url_for
-from os import getenv
 import json
+from flask import request, send_file, Blueprint
 
 import cdn_database
+from utils import validate_and_parse_token
 
 files = Blueprint('files', __name__)
-
-JWT_SECRET = getenv('JWT_SECRET')
 
 files_db = cdn_database.Files()
 
@@ -80,31 +77,3 @@ def detach():
 
     files_db.detach(username, filename)
     return 'File detached', 200
-
-
-def validate_and_parse_token(token, action_context):
-    if token is None:
-        return False, ('No token', 401)
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-    except jwt.InvalidTokenError:
-        return False, ('Invalid token', 401)
-
-    username = payload.get('username')
-    if username is None:
-        return False, ('Missing username', 404)
-
-    action = payload.get('action')
-    if action is None:
-        return False, ('Missing action', 404)
-    if action != action_context:
-        return False, (f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for the URL', 401)
-
-    return True, username
-
-
-def redirect(location):
-    response = make_response('', 303)
-    response.headers["Location"] = url_for(location)
-    return response

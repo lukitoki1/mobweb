@@ -2,6 +2,7 @@ import io
 import os
 
 import pymongo
+from bson import ObjectId
 from pymongo.errors import DuplicateKeyError
 
 MONGO_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
@@ -30,7 +31,6 @@ class Files:
             return query_result_list
 
         filenames_list = [filename_dict['filename'] for filename_dict in query_result_list]
-        print(filenames_list)
         return filenames_list
 
     def download(self, username, filename):
@@ -51,3 +51,22 @@ class Publications:
     def __init__(self):
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
         self.publications = self.db.publications
+
+    def upload(self, username, title, authors: list, year):
+        self.publications.insert_one({'username': username, 'title': title, 'authors': authors, 'year': year})
+
+    def list(self, username):
+        query_result = self.publications.find({'username': username})
+        query_result_list = list(query_result)
+
+        if len(query_result_list) == 0:
+            return query_result_list
+
+        for publications_dict in query_result_list:
+            publications_dict['_id'] = str(publications_dict['_id'])
+
+        return query_result_list
+
+    def delete(self, username, pid: str):
+        self.publications.delete_one({'username': username, '_id': ObjectId(pid)})
+        self.db.files.delete_many({'username': username, 'pid': pid})
