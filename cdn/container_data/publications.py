@@ -3,7 +3,7 @@ import json
 from flask import request, Blueprint
 
 from .database import Publications
-from .utils import validate_and_parse_token
+from .utils import validate_and_decode_token
 
 publications = Blueprint('publications', __name__)
 
@@ -12,7 +12,7 @@ publications_db = Publications()
 
 @publications.before_request
 def check_token_valid():
-    valid, message = validate_and_parse_token(request.headers.get('Authorization'), request.endpoint)
+    valid, message = validate_and_decode_token(request.headers.get('Authorization'), request.endpoint)
     if not valid:
         return message
     return

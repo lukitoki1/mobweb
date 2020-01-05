@@ -3,7 +3,7 @@ import json
 from flask import request, send_file, Blueprint
 
 from .database import Files
-from .utils import validate_and_parse_token
+from .utils import validate_and_decode_token
 
 files = Blueprint('files', __name__)
 
@@ -12,7 +12,7 @@ files_db = Files()
 
 @files.before_request
 def check_token_valid():
-    valid, message = validate_and_parse_token(request.headers.get('Authorization'), request.endpoint)
+    valid, message = validate_and_decode_token(request.headers.get('Authorization'), request.endpoint)
     if not valid:
         return message
     return
@@ -24,8 +24,8 @@ def list():
 
     files_list = files_db.list(username)
     if files_list is None or len(files_list) == 0:
-        return json.dumps([])
-    return json.dumps(files_list)
+        return json.dumps([]), 200
+    return json.dumps(files_list), 200
 
 
 @files.route('/download', methods=['GET'])
@@ -48,7 +48,7 @@ def upload():
     result, message = files_db.upload(username, f.filename, f.read())
     f.close()
     if not result:
-        return message
+        return message, 401
     return 'File uploaded', 200
 
 

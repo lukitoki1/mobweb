@@ -1,13 +1,12 @@
-import datetime
 import io
 import json
 from os import getenv
 
-import jwt
+import basicauth
 import requests
 from flask import Flask, send_file, request, make_response, render_template
 
-from .database import Users, Sessions
+from .database import Sessions
 
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
@@ -16,7 +15,6 @@ INVALIDATE = -1
 
 app = Flask(__name__)
 
-users = Users()
 session = Sessions()
 invalid_session_surpass_endpoints = ['login', 'auth']
 
@@ -46,39 +44,49 @@ def auth():
     password = request.form.get('password')
     if username is "" or password is "":
         return redirect('/login')
-    if users.check(username, password):
-        session_id = session.create(username)
-        response = redirect('/index')
-        response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
-    else:
-        response = invalidate_session()
+
+    basic_auth = basicauth.encode(username, password)
+    response = requests.get("http://api:5000/users/check", headers={"Authorization": basic_auth})
+    if response.status_code is not 200:
+        return invalidate_session()
+
+    session_id = session.create(username, password)
+    response = redirect('/index')
+    response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
     return response
 
 
 @app.route('/index')
 def welcome():
-    username = get_username(request)
-    files_list = get_files_list(username)
+    username, password = get_credentials(request)
+    basic_auth = basicauth.encode(username, password)
+
+    response = requests.get("http://api:5000/files/list", headers={"Authorization": basic_auth})
+    if response.status_code is not 200:
+        return render_template('callback.html', communicate=response.content.decode('utf-8'))
+    files_list = json.loads(response.content)
+
     return render_template("index.html", listOfFiles=files_list, username=username)
 
 
 @app.route('/upload', methods=['POST'])
 def upload():
     f = request.files.get('file')
-    username = get_username(request)
-    upload_token = create_token(username, 'files', 'upload').decode('utf-8')
-    result = requests.post('http://cdn:5000/files/upload', files={'file': (f.filename, f.stream, f.mimetype)},
-                           headers={'Authorization': upload_token}, params={'username': username})
+    username, password = get_credentials(request)
+    basic_auth = basicauth.encode(username, password)
+
+    result = requests.post('http://api:5000/files/upload', files={'file': (f.filename, f.stream, f.mimetype)},
+                           headers={'Authorization': basic_auth})
     return render_template('callback.html', communicate=result.content.decode('utf-8'))
 
 
 @app.route('/download', methods=['GET'])
 def download():
     filename = request.args.get('filename')
-    username = get_username(request)
-    download_token = create_token(username, 'files', 'download').decode('utf-8')
-    response = requests.get('http://cdn:5000/files/download', params={'filename': filename, 'username': username},
-                            headers={'Authorization': download_token})
+    username, password = get_credentials(request)
+    basic_auth = basicauth.encode(username, password)
+    response = requests.get('http://api:5000/files/download', params={'filename': filename},
+                            headers={'Authorization': basic_auth})
     if response.status_code is not 200:
         return render_template('callback.html', communicate=response.content.decode('utf-8'))
     return send_file(io.BytesIO(response.content), attachment_filename=filename, as_attachment=True)
@@ -98,24 +106,9 @@ def invalidate_session():
     return response
 
 
-def get_username(fwd_request):
+def get_credentials(fwd_request):
     session_id = fwd_request.cookies.get('session_id')
-    return session.get_username(session_id)
-
-
-def get_files_list(username):
-    list_token = create_token(username, 'files', 'list').decode('utf-8')
-    response = requests.get("http://cdn:5000/files/list", headers={"Authorization": list_token},
-                            params={'username': username})
-    if response.status_code is not 200:
-        return render_template('callback.html', communicate=response.content.decode('utf-8'))
-    return json.loads(response.content)
-
-
-def create_token(username, datatype, action):
-    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
-                      JWT_SECRET, "HS256")
+    return session.get_credentials(session_id)
 
 
 def redirect(location):

@@ -5,7 +5,7 @@ import jwt
 JWT_SECRET = getenv('JWT_SECRET')
 
 
-def validate_and_parse_token(token, action_context):
+def validate_and_decode_token(token, action_context):
     if token is None:
         return False, ('No token', 401)
 
