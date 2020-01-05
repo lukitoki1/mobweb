@@ -1,27 +1,23 @@
-from flask import Flask, send_file
-from flask import request
-from flask import make_response
-from flask import render_template
-from os import getenv
 import datetime
 import io
+import json
+from os import getenv
 
-import web_database
 import jwt
 import requests
-import json
+from flask import Flask, send_file, request, make_response, render_template
+
+from .database import Users, Sessions
 
 SESSION_TIME = int(getenv("SESSION_TIME"))
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
 INVALIDATE = -1
-REDIS_HOST = getenv('REDIS_HOST')
-REDIS_PORT = int(getenv('REDIS_PORT'))
 
 app = Flask(__name__)
 
-users = web_database.Users(REDIS_HOST, REDIS_PORT)
-session = web_database.Sessions(REDIS_HOST, REDIS_PORT)
+users = Users()
+session = Sessions()
 invalid_session_surpass_endpoints = ['login', 'auth']
 
 

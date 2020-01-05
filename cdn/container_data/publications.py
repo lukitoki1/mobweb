@@ -1,12 +1,13 @@
 import json
+
 from flask import request, Blueprint
 
-import cdn_database
-from utils import validate_and_parse_token
+from .database import Publications
+from .utils import validate_and_parse_token
 
 publications = Blueprint('publications', __name__)
 
-publications_db = cdn_database.Publications()
+publications_db = Publications()
 
 
 @publications.before_request

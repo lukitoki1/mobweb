@@ -1,9 +1,14 @@
+from os import getenv
+
 import redis
+
+REDIS_HOST = getenv('REDIS_HOST')
+REDIS_PORT = int(getenv('REDIS_PORT'))
 
 
 class Users:
-    def __init__(self, host, port):
-        self.db = redis.Redis(host=host, port=port, db=0)
+    def __init__(self):
+        self.db = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         self.populate()
 
     def populate(self):

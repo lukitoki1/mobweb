@@ -1,12 +1,13 @@
 import json
+
 from flask import request, send_file, Blueprint
 
-import cdn_database
-from utils import validate_and_parse_token
+from .database import Files
+from .utils import validate_and_parse_token
 
 files = Blueprint('files', __name__)
 
-files_db = cdn_database.Files()
+files_db = Files()
 
 
 @files.before_request
