@@ -70,9 +70,9 @@ def welcome():
 def upload():
     f = request.files.get('file')
     username = get_username(request)
-    upload_token = create_token(username, 'upload').decode('utf-8')
-    result = requests.post('http://cdn:5000/files/', files={'file': (f.filename, f.stream, f.mimetype)},
-                           headers={'Authorization': upload_token})
+    upload_token = create_token(username, 'files', 'upload').decode('utf-8')
+    result = requests.post('http://cdn:5000/files/upload', files={'file': (f.filename, f.stream, f.mimetype)},
+                           headers={'Authorization': upload_token}, params={'username': username})
     return render_template('callback.html', communicate=result.content.decode('utf-8'))
 
 
@@ -80,8 +80,8 @@ def upload():
 def download():
     filename = request.args.get('filename')
     username = get_username(request)
-    download_token = create_token(username, 'download').decode('utf-8')
-    response = requests.get('http://cdn:5000/files/', params={'filename': filename},
+    download_token = create_token(username, 'files', 'download').decode('utf-8')
+    response = requests.get('http://cdn:5000/files/download', params={'filename': filename, 'username': username},
                             headers={'Authorization': download_token})
     if response.status_code is not 200:
         return render_template('callback.html', communicate=response.content.decode('utf-8'))
@@ -108,17 +108,18 @@ def get_username(fwd_request):
 
 
 def get_files_list(username):
-    list_token = create_token(username, 'list').decode('utf-8')
-    response = requests.get("http://cdn:5000/files/", headers={"Authorization": list_token})
+    list_token = create_token(username, 'files', 'list').decode('utf-8')
+    response = requests.get("http://cdn:5000/files/list", headers={"Authorization": list_token},
+                            params={'username': username})
     if response.status_code is not 200:
         return render_template('callback.html', communicate=response.content.decode('utf-8'))
     return json.loads(response.content)
 
 
-def create_token(username, action):
+def create_token(username, datatype, action):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": action}, JWT_SECRET,
-                      "HS256")
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
+                      JWT_SECRET, "HS256")
 
 
 def redirect(location):

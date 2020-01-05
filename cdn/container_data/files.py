@@ -12,67 +12,74 @@ JWT_SECRET = getenv('JWT_SECRET')
 files_db = cdn_database.Files()
 
 
-@files.route('/', methods=['GET'])
-def list_or_download():
-    filename = request.args.get('filename')
-    if filename:
-        return download(filename)
-
-    return list()
-
-
-def list():
-    token = request.headers.get('Authorization')
-    valid, message = validate_and_parse_token(token, 'list')
+@files.before_request
+def check_token_valid():
+    valid, message = validate_and_parse_token(request.headers.get('Authorization'), request.endpoint)
     if not valid:
         return message
+    return
 
-    username, action = message
+
+@files.route('/list', methods=['GET'])
+def list():
+    username = request.args.get('username')
+
     files_list = files_db.list(username)
     if files_list is None or len(files_list) == 0:
         return json.dumps([])
     return json.dumps(files_list)
 
 
-def download(filename):
-    token = request.headers.get('Authorization')
-    valid, message = validate_and_parse_token(token, 'download')
-    if not valid:
-        return message
+@files.route('/download', methods=['GET'])
+def download():
+    username = request.args.get('username')
+    filename = request.args.get('filename')
 
-    username, action = message
     file = files_db.download(username, filename)
     return send_file(file, attachment_filename=filename)
 
 
-@files.route('/', methods=['POST'])
+@files.route('/upload', methods=['POST'])
 def upload():
+    username = request.args.get('username')
+
     f = request.files.get('file')
-    token = request.headers.get('Authorization')
-
-    valid, message = validate_and_parse_token(token, 'upload')
-    if not valid:
-        return message
-
-    username, action = message
     if f.filename is "":
         return 'No file provided', 400
 
-    files_db.upload(username, f.filename, f.read())
+    result, message = files_db.upload(username, f.filename, f.read())
     f.close()
+    if not result:
+        return message
     return 'File uploaded', 200
 
 
-@files.route('/<filename>', methods=['DELETE'])
-def delete(filename):
-    token = request.headers.get('Authorization')
-    valid, message = validate_and_parse_token(token, 'delete')
-    if not valid:
-        return message
+@files.route('/delete', methods=['DELETE'])
+def delete():
+    username = request.args.get('username')
+    filename = request.args.get('filename')
 
-    username, action = message
     files_db.delete(username, filename)
     return 'File deleted', 200
+
+
+@files.route('/attach', methods=['PATCH'])
+def attach():
+    username = request.args.get('username')
+    filename = request.args.get('filename')
+    pid = request.args.get('pid')
+
+    files_db.attach(username, filename, pid)
+    return 'File attached', 200
+
+
+@files.route('/detach', methods=['PATCH'])
+def detach():
+    username = request.args.get('username')
+    filename = request.args.get('filename')
+
+    files_db.detach(username, filename)
+    return 'File detached', 200
 
 
 def validate_and_parse_token(token, action_context):
@@ -94,7 +101,8 @@ def validate_and_parse_token(token, action_context):
     if action != action_context:
         return False, (f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for the URL', 401)
 
-    return True, (username, action)
+    return True, username
+
 
 def redirect(location):
     response = make_response('', 303)
