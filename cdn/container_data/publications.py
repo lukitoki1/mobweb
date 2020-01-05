@@ -3,7 +3,7 @@ import json
 from flask import request, Blueprint
 
 from .database import Publications
-from .utils import validate_and_decode_token
+from .token import validate_and_decode_token
 
 publications = Blueprint('publications', __name__)
 

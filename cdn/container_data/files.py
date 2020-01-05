@@ -3,7 +3,7 @@ import json
 from flask import request, send_file, Blueprint
 
 from .database import Files
-from .utils import validate_and_decode_token
+from .token import validate_and_decode_token
 
 files = Blueprint('files', __name__)
 
@@ -32,6 +32,8 @@ def list():
 def download():
     username = request.args.get('username')
     filename = request.args.get('filename')
+    if filename is None:
+        return 'No filename provided', 400
 
     file = files_db.download(username, filename)
     return send_file(file, attachment_filename=filename)
@@ -66,6 +68,8 @@ def attach():
     username = request.args.get('username')
     filename = request.args.get('filename')
     pid = request.args.get('pid')
+    if pid is None:
+        return 'No publication ID provided'
 
     files_db.attach(username, filename, pid)
     return 'File attached', 200
