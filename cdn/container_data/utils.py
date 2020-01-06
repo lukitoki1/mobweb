@@ -2,7 +2,12 @@ from os import getenv
 
 import jwt
 
+from .database import Files, Publications
+
 JWT_SECRET = getenv('JWT_SECRET')
+
+files_db = Files()
+publications_db = Publications()
 
 
 def validate_and_decode_token(token, action_context):

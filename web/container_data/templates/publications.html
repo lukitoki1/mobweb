@@ -16,9 +16,9 @@
         {% for publication in publications %}
             <li>
                 <ul>
-                    <li>{{ publication['title'] }}</li>
-                    <li>{{ publication['authors'] }}</li>
-                    <li>{{ publication['year'] }}</li>
+                    <li>Title: {{ publication['title'] }}</li>
+                    <li>Authors: {{ publication['authors'] }}</li>
+                    <li>Year: {{ publication['year'] }}</li>
                     {% for file in publication['files'] %}
                         <li>
                             <a class="list-group-item list-group-item-action" target="_blank"
@@ -38,21 +38,21 @@
 </div>
 <div>
     <h3>Upload new publication</h3>
-    <a href="https://web.company.com/publications/form/">
+    <a href="https://web.company.com/publications/new">
         <button>New publication</button>
     </a>
 </div>
 <div>
     <h3>Pin file to publication</h3>
-    <form class="form" action="https://web.company.com/files/attach" method="POST" enctype="multipart/form-data">
+    <form class="form" action="https://web.company.com/files/attach" method="POST" id="attach-form">
         <a>File: </a>
-        <select name="filename">
+        <select name="filename" form="attach-form">
             {% for file in files_list %}
                 <option value={{ file }}>{{ file }}</option>
             {% endfor %}
         </select>
         <a>Publication: </a>
-        <select name="pid">
+        <select name="pid" form="attach-form">
             {% for publication in publications %}
                 <option value={{ publication['pid'] }}>{{ publication['title'] }}</option>
             {% endfor %}
@@ -61,7 +61,7 @@
     </form>
 </div>
 <div>
-    Logged in as: {{ username }}
+    <h3>Logged in as: {{ username }}</h3>
     <a href="https://web.company.com/logout">
         <button>Sign out</button>
     </a>

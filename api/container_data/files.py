@@ -1,16 +1,8 @@
-import datetime
-from os import getenv
-
 import basicauth
-import jwt
 import requests
 from flask import request, make_response, Blueprint
-from requests import Response
 
-from .users import validate_and_decode_credentials
-
-JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
-JWT_SECRET = getenv("JWT_SECRET")
+from .utils import validate_and_decode_credentials, create_token, wrap_response
 
 files = Blueprint('files', __name__)
 
@@ -25,10 +17,14 @@ def check_credentials_valid():
 
 @files.route('/list', methods=['GET'])
 def get_files_list():
+    pid = request.args.get('pid')
     username, _ = basicauth.decode(request.headers.get('Authorization'))
+    params = {'username': username}
+    if pid is not None:
+        params['pid'] = pid
+
     list_token = create_token(username, 'files', 'list').decode('utf-8')
-    response = requests.get("http://cdn:5000/files/list", headers={"Authorization": list_token},
-                            params={'username': username})
+    response = requests.get("http://cdn:5000/files/list", headers={"Authorization": list_token}, params=params)
     return wrap_response(response)
 
 
@@ -78,19 +74,9 @@ def detach():
     filename = request.args.get('filename')
     username, _ = basicauth.decode(request.headers.get('Authorization'))
     detach_token = create_token(username, 'files', 'detach').decode('utf-8')
-    response = requests.patch('http://cdn:5000/files/attach', headers={'Authorization': detach_token},
+    response = requests.patch('http://cdn:5000/files/detach', headers={'Authorization': detach_token},
                               params={'filename': filename, 'username': username})
     return wrap_response(response)
-
-
-def create_token(username, datatype, action):
-    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
-                      JWT_SECRET, "HS256")
-
-
-def wrap_response(fwd_response: Response):
-    return fwd_response.content, fwd_response.status_code, fwd_response.headers.items()
 
 
 def redirect(location):

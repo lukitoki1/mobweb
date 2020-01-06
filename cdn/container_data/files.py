@@ -2,12 +2,9 @@ import json
 
 from flask import request, send_file, Blueprint
 
-from .database import Files
-from .token import validate_and_decode_token
+from .utils import validate_and_decode_token, files_db
 
 files = Blueprint('files', __name__)
-
-files_db = Files()
 
 
 @files.before_request
@@ -21,8 +18,9 @@ def check_token_valid():
 @files.route('/list', methods=['GET'])
 def list():
     username = request.args.get('username')
+    pid = request.args.get('pid')
 
-    files_list = files_db.list(username)
+    files_list = files_db.list(username, pid)
     if files_list is None or len(files_list) == 0:
         return json.dumps([]), 200
     return json.dumps(files_list), 200
@@ -80,5 +78,5 @@ def detach():
     username = request.args.get('username')
     filename = request.args.get('filename')
 
-    files_db.detach(username, filename)
+    files_db.detach(username, filename=filename)
     return 'File detached', 200

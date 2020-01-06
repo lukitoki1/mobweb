@@ -14,7 +14,7 @@ class Files:
     def __init__(self):
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
         self.files = self.db.files
-        self.files.create_index('filename', unique=True)
+        self.files.create_index([('username', pymongo.DESCENDING), ('filename', pymongo.ASCENDING)], unique=True)
 
     def upload(self, username, filename, file):
         try:
@@ -23,8 +23,14 @@ class Files:
         except DuplicateKeyError:
             return False, 'File with the exact name is already owned by the user'
 
-    def list(self, username) -> list:
-        query_result = self.files.find({'username': username}, {'_id': 0, 'filename': 1})
+    def list(self, username, pid=None) -> list:
+        if pid is None:
+            query_result = self.files.find({'username': username}, {'_id': 0, 'filename': 1})
+        elif pid == '-1':
+            query_result = self.files.find({'username': username, 'pid': None}, {'_id': 0, 'filename': 1})
+        else:
+            query_result = self.files.find({'username': username, 'pid': pid}, {'_id': 0, 'filename': 1})
+
         query_result_list = list(query_result)
 
         if len(query_result_list) == 0:
@@ -43,14 +49,21 @@ class Files:
     def attach(self, username, filename, pid):
         self.files.update_one({'username': username, 'filename': filename}, {"$set": {'pid': pid}})
 
-    def detach(self, username, filename):
-        self.files.update_one({'username': username, 'filename': filename}, {"$set": {'pid': None}})
+    def detach(self, username, **kwargs):
+        filename = kwargs.get('filename')
+        pid = kwargs.get('pid')
+
+        if filename is not None:
+            self.files.update_one({'username': username, 'filename': filename}, {"$set": {'pid': None}})
+        elif pid is not None:
+            self.files.update_many({'username': username, 'pid': pid}, {"$set": {'pid': None}})
 
 
 class Publications:
     def __init__(self):
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
         self.publications = self.db.publications
+        self.files = self.db.files
 
     def upload(self, username, title, authors: list, year):
         self.publications.insert_one({'username': username, 'title': title, 'authors': authors, 'year': year})
@@ -63,10 +76,10 @@ class Publications:
             return query_result_list
 
         for publications_dict in query_result_list:
-            publications_dict['_id'] = str(publications_dict['_id'])
+            publications_dict['pid'] = str(publications_dict['_id'])
+            del publications_dict['_id']
 
         return query_result_list
 
     def delete(self, username, pid: str):
         self.publications.delete_one({'username': username, '_id': ObjectId(pid)})
-        self.db.files.delete_many({'username': username, 'pid': pid})

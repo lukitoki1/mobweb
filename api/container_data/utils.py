@@ -1,7 +1,14 @@
+import datetime
+from os import getenv
+
 import basicauth
-from flask import Blueprint, request
+import jwt
+from flask import Blueprint, request, Response
 
 from .database import Users
+
+JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
+JWT_SECRET = getenv("JWT_SECRET")
 
 users = Blueprint('users', __name__)
 
@@ -29,3 +36,13 @@ def validate_and_decode_credentials(credentials):
         return False, ('Wrong username or password', 404)
 
     return True, username
+
+
+def create_token(username, datatype, action):
+    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
+                      JWT_SECRET, "HS256")
+
+
+def wrap_response(fwd_response: Response):
+    return fwd_response.content, fwd_response.status_code, fwd_response.headers.items()

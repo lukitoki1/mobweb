@@ -1,9 +1,10 @@
 # Kamień milowy nr 2
-## Aplikacja do przechowywania plików
+### Uruchomienie
 
 Serwery aplikacji mają adresy odpowiednio:
 * https://web.company.com
 * https://cdn.company.com
+* https://api.company.com
 
 Aby wysłanie zapytania było możliwe, należy w swoim systemie operacyjnym
 zmapować powyższe adresy na localhost.
@@ -21,7 +22,35 @@ Przykładowe dane logowania umieszczone w bazie:
 * login: admin
 * hasło: admin
 
-Komentarz: Jako twórca strony jestem świadom, iż nie reprezentuje ona sobą wysokich walorów
-estetycznych, lecz moim głównym założeniem przy jej rozwoju było stworzenie
-solidnego serwera, który w następnym kamieniu milowym będę mógł ozdobić
-dowolnym frameworkiem.
+### Implementacja HATEOAS
+
+Postanowiłem od zera zaimplementować własny mechanizm generowania informacji o linkach.
+Za generowanie struktur HATEOAS odpowiedzialny jest serwer API.
+Serwer API otrzymując zapytanie pod `/publications/list` generuje pliki HAL według następującego schematu:
+
+```python
+[
+    {
+        'pid': '',
+        'title': '',
+        'authors': ['', '', ..., ''],
+        'year': '',
+        '_links':{
+            'publication': {
+                'delete': '/publications/delete?pid=...'
+            },
+            'files': {
+                {
+                    'filename': '',
+                    'download': '/files/download?...',
+                    'delete': '/files/delete?...'
+                },
+                ...      
+            }   
+        }     
+    }
+    ...
+]
+```
+
+### API serwera API
