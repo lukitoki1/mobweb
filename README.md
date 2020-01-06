@@ -1,4 +1,4 @@
-# Kamień milowy nr 2
+# Kamień milowy nr 3
 ### Uruchomienie
 
 Serwery aplikacji mają adresy odpowiednio:
@@ -26,7 +26,8 @@ Przykładowe dane logowania umieszczone w bazie:
 
 Postanowiłem od zera zaimplementować własny mechanizm generowania informacji o linkach.
 Za generowanie struktur HATEOAS odpowiedzialny jest serwer API.
-Serwer API otrzymując zapytanie pod `/publications/list` generuje pliki HAL według następującego schematu:
+Serwer API otrzymując zapytanie pod `/publications/list` generuje i zwraca pliki HAL według 
+następującego schematu:
 
 ```python
 [
@@ -53,4 +54,39 @@ Serwer API otrzymując zapytanie pod `/publications/list` generuje pliki HAL wed
 ]
 ```
 
-### API serwera API
+### API obsługiwane przez serwer
+
+Każde zapytanie do serwera API musi zostać opatrzone nagłówkiem `Authorization`,
+który który stanowi login oraz hasło do usługi zaszyfrowany mechanizmem `HTTPBasicAuth`.
+
+```http request
+GET /files/list?pid=pid
+```
+`pid` opcjonalne; 
+
+* brak `pid` zwróci listę wszystkich plików, 
+* podanie pid zwróci pliki przypisane do publikacji o podanym ID,
+* `pid=-1` zwróci listę plików nieprzypisanych do żadnej publikacji
+
+```http request
+GET files/donwload?filename=filename
+POST files/upload
+DELETE /files/delete?filename=filename
+PATCH /files/attach?filename=filename&pid=pid
+PATCH /files/detach?filename=filename
+```
+
+```http request
+GET /publications/list
+POST /publications/upload
+DELETE /publications/delete?pid=pid
+```
+
+Usunięcię publikacji powoduje automatyczne odłączenie wszystkich jej plików.
+
+```http request
+GET /users/check
+```
+
+Sprawdzenie, czy użytkownik próbujący zakogować się do serwisu web znajduje się
+w bazie użytkowników.

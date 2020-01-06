@@ -9,8 +9,6 @@ from .files import files
 from .publications import publications
 
 SESSION_TIME = int(getenv("SESSION_TIME"))
-JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
-JWT_SECRET = getenv("JWT_SECRET")
 INVALIDATE = -1
 
 app = Flask(__name__)
