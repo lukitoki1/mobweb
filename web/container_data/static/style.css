@@ -2,10 +2,6 @@
     list-style-type: none;
 }
 
-li {
-    list-style-type: none;
-}
-
-.title {
-    max-width: 30%;
+.pad {
+    padding-bottom: 16px;
 }

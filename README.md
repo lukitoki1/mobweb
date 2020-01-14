@@ -69,8 +69,8 @@ GET /files/list?pid=pid
 * `pid=-1` zwróci listę plików nieprzypisanych do żadnej publikacji
 
 ```http request
-GET files/donwload?filename=filename
-POST files/upload
+GET /files/donwload?filename=filename
+POST /files/upload
 DELETE /files/delete?filename=filename
 PATCH /files/attach?filename=filename&pid=pid
 PATCH /files/detach?filename=filename

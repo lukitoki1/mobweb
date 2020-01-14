@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <title>File Service</title>
-    <link href="/static/style.css" rel="stylesheet" type="text/css">
+    <link href="../static/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 <div>
@@ -14,7 +14,7 @@
     <h3>Uploaded publications</h3>
     <ul>
         {% for publication in publications %}
-            <li>
+            <li class="pad">
                 <ul>
                     <li>Title: {{ publication['title'] }}</li>
                     <li>Authors: {{ publication['authors'] }}</li>
@@ -43,7 +43,7 @@
     </a>
 </div>
 <div>
-    <h3>Pin file to publication</h3>
+    <h3>Attach file to publication</h3>
     <form class="form" action="https://web.company.com/files/attach" method="POST" id="attach-form">
         <a>File: </a>
         <select name="filename" form="attach-form">
