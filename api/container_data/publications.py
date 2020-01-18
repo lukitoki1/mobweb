@@ -1,17 +1,16 @@
 import json
 
-import basicauth
 import requests
 from flask import Blueprint, request, make_response
 
-from .utils import create_token, wrap_response
+from .utils import create_token, wrap_response, get_username_from_token
 
 publications = Blueprint('publications', __name__)
 
 
 @publications.route('/list', methods=['GET'])
 def list():
-    username, _ = basicauth.decode(request.headers.get('Authorization'))
+    username = get_username_from_token(request.headers.get('Authorization'))
     pubications_list_token = create_token(username, 'publications', 'list').decode('utf-8')
     publications_response = requests.get("http://cdn:5000/publications/list",
                                          headers={"Authorization": pubications_list_token},
@@ -40,7 +39,7 @@ def list():
 
 @publications.route('/upload', methods=['POST'])
 def upload():
-    username, _ = basicauth.decode(request.headers.get('Authorization'))
+    username = get_username_from_token(request.headers.get('Authorization'))
     upload_token = create_token(username, 'publications', 'upload').decode('utf-8')
     response = requests.post('http://cdn:5000/publications/upload', data=request.form,
                              headers={'Authorization': upload_token}, params={'username': username})
@@ -50,7 +49,7 @@ def upload():
 @publications.route('/delete', methods=['DELETE'])
 def delete():
     pid = request.args.get('pid')
-    username, _ = basicauth.decode(request.headers.get('Authorization'))
+    username = get_username_from_token(request.headers.get('Authorization'))
     delete_token = create_token(username, 'publications', 'delete').decode('utf-8')
     response = requests.delete('http://cdn:5000/publications/delete', headers={'Authorization': delete_token},
                                params={'pid': pid, 'username': username})

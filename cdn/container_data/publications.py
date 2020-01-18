@@ -3,17 +3,8 @@ import json
 from flask import request, Blueprint
 
 from .utils import files_db, publications_db
-from .utils import validate_and_decode_token
 
 publications = Blueprint('publications', __name__)
-
-
-@publications.before_request
-def check_token_valid():
-    valid, message = validate_and_decode_token(request.headers.get('Authorization'), request.endpoint)
-    if not valid:
-        return message
-    return
 
 
 @publications.route('/list', methods=['GET'])

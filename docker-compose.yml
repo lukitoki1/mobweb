@@ -20,9 +20,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - api/.env
-      - .env/redis.env
-    depends_on:
-      - redis
     volumes:
       - ./api/container_data:/var/www/app
 
@@ -33,9 +30,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - web/.env
-      - .env/redis.env
-    depends_on:
-      - redis
     volumes:
       - ./web/container_data:/var/www/app
 
@@ -47,16 +41,8 @@ services:
     env_file:
       - cdn/.env
       - .env/mongo.env
-    depends_on:
-      - redis
     volumes:
       - ./cdn/container_data:/var/www/app
-
-  redis:
-    container_name: redis_container
-    image: redis:latest
-    volumes:
-      - redis_data:/data
 
   mongodb:
     container_name: mongo_container
@@ -67,5 +53,4 @@ services:
       - mongo_data:/data/db
 
 volumes:
-  redis_data:
   mongo_data:

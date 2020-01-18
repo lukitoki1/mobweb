@@ -2,17 +2,9 @@ import json
 
 from flask import request, send_file, Blueprint
 
-from .utils import validate_and_decode_token, files_db
+from .utils import files_db
 
 files = Blueprint('files', __name__)
-
-
-@files.before_request
-def check_token_valid():
-    valid, message = validate_and_decode_token(request.headers.get('Authorization'), request.endpoint)
-    if not valid:
-        return message
-    return
 
 
 @files.route('/list', methods=['GET'])

@@ -1,6 +1,5 @@
 import json
 
-import basicauth
 import requests
 from flask import Blueprint, request, render_template, current_app
 
@@ -10,11 +9,11 @@ publications = Blueprint('publications', __name__)
 
 
 @publications.route('/')
+@requires_auth
 def welcome():
-    username, password = get_credentials(request)
-    basic_auth = basicauth.encode(username, password)
-
-    publications_response = requests.get("http://api:5000/publications/list", headers={"Authorization": basic_auth})
+    username = session['profile']['name']
+    token = create_token(username, 'publications', 'list').decode('utf-8')
+    publications_response = requests.get("http://api:5000/publications/list", headers={"Authorization": token})
     publications_list = json.loads(publications_response.content)
 
     for publication in publications_list:
@@ -29,7 +28,8 @@ def welcome():
 
         publication['files'] = files
 
-    files_response = requests.get("http://api:5000/files/list", headers={"Authorization": basic_auth},
+    token = create_token(username, 'files', 'list').decode('utf-8')
+    files_response = requests.get("http://api:5000/files/list", headers={"Authorization": token},
                                   params={'pid': '-1'})
     files_list = json.loads(files_response.content)
 
@@ -38,30 +38,31 @@ def welcome():
 
 
 @publications.route('/new', methods=['GET'])
+@requires_auth
 def new():
-    username, password = get_credentials(request)
+    username = session['profile']['name']
     return render_template('form.html', username=username)
 
 
 @publications.route('/upload', methods=['POST'])
+@requires_auth
 def upload():
     form = request.form.to_dict()
     current_app.logger.error(form)
-    username, password = get_credentials(request)
-    basic_auth = basicauth.encode(username, password)
-
-    response = requests.post("http://api:5000/publications/upload", data=form, headers={'Authorization': basic_auth})
+    username = session['profile']['name']
+    token = create_token(username, 'publications', 'upload').decode('utf-8')
+    response = requests.post("http://api:5000/publications/upload", data=form, headers={'Authorization': token})
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
 
 
 @publications.route('/delete', methods=['GET'])
+@requires_auth
 def delete():
     pid = request.args.get('pid')
-    username, password = get_credentials(request)
-    basic_auth = basicauth.encode(username, password)
-
+    username = session['profile']['name']
+    token = create_token(username, 'publications', 'delete').decode('utf-8')
     response = requests.delete("http://api:5000/publications/delete", params={'pid': pid},
-                               headers={"Authorization": basic_auth})
+                               headers={"Authorization": token})
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))

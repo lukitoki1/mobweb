@@ -1,13 +1,28 @@
-from flask import make_response, url_for
+import datetime
+from os import getenv
 
-from .database import Sessions
+import jwt
+from flask import make_response, url_for, session
+from six import wraps
 
-sessions_db = Sessions()
+JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
+JWT_SECRET = getenv("JWT_SECRET")
 
 
-def get_credentials(fwd_request):
-    session_id = fwd_request.cookies.get('session_id')
-    return sessions_db.get_credentials(session_id)
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'profile' not in session:
+            return redirect('login')
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def create_token(username, datatype, action):
+    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
+                      JWT_SECRET, "HS256")
 
 
 def redirect(location):

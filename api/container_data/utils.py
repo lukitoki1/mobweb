@@ -1,47 +1,45 @@
 import datetime
 from os import getenv
 
-import basicauth
 import jwt
-from flask import Blueprint, request, Response
-
-from .database import Users
+from flask import Response
 
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
-
-users = Blueprint('users', __name__)
-
-users_db = Users()
-
-
-@users.route('/check', methods=['GET'])
-def check_user():
-    result, message = validate_and_decode_credentials(request.headers.get('Authorization'))
-    if not result:
-        return message
-    return '', 200
-
-
-def validate_and_decode_credentials(credentials):
-    if credentials is None:
-        return False, ('No credentials', 401)
-
-    username, password = basicauth.decode(credentials)
-
-    if len(username) == 0 or len(password) == 0:
-        return False, ('Incomplete credentials', 404)
-
-    if not users_db.check(username, password):
-        return False, ('Wrong username or password', 404)
-
-    return True, username
 
 
 def create_token(username, datatype, action):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
     return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, "action": datatype + '.' + action},
                       JWT_SECRET, "HS256")
+
+
+def validate_and_decode_token(token, action_context):
+    if token is None:
+        return False, ('No token', 401)
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.InvalidTokenError:
+        return False, ('Invalid token', 401)
+
+    username = payload.get('username')
+    if username is None:
+        return False, ('Missing username', 404)
+
+    action = payload.get('action')
+    if action is None:
+        return False, ('Missing action', 404)
+    if action != action_context:
+        return False, (
+            f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for '
+            f'the URL', 401)
+
+    return True, username
+
+
+def get_username_from_token(token):
+    return jwt.decode(token, JWT_SECRET, algorithms=['HS256']).get('username')
 
 
 def wrap_response(fwd_response: Response):

@@ -1,4 +1,9 @@
-# Kamień milowy nr 3
+# Kamień milowy nr 4
+
+### Najważniejsze zmiany
+* implementacja logowania za pomocą usługi `Auth0`,
+* aplikacja kliencka uwierzytelnia się w serwerze API tokenem, a nie loginem i hasłem.
+
 ### Uruchomienie
 
 Serwery aplikacji mają adresy odpowiednio:
@@ -19,10 +24,10 @@ docker-compose -f "docker-compose.yml" up -d --build
 Aplikacja dostępna jest pod adresem https://web.company.com.
 
 Przykładowe dane logowania umieszczone w bazie:
-* login: admin
+* login: admin@gmail.com
 * hasło: admin
 
-### Implementacja HATEOAS
+### HATEOAS
 
 Postanowiłem od zera zaimplementować własny mechanizm generowania informacji o linkach.
 Za generowanie struktur HATEOAS odpowiedzialny jest serwer API.
@@ -54,11 +59,10 @@ następującego schematu:
 ]
 ```
 
-### API obsługiwane przez serwer
+### API
 
 Każde zapytanie do serwera API musi zostać opatrzone nagłówkiem `Authorization`,
-który który stanowi login oraz hasło do usługi zaszyfrowany mechanizmem `HTTPBasicAuth`.
-
+który który stanowi zaszyfrowany token `JWT`.
 ```http request
 GET /files/list?pid=pid
 ```
@@ -83,10 +87,3 @@ DELETE /publications/delete?pid=pid
 ```
 
 Usunięcię publikacji powoduje automatyczne odłączenie wszystkich jej plików.
-
-```http request
-GET /users/check
-```
-
-Sprawdzenie, czy użytkownik próbujący zakogować się do serwisu web znajduje się
-w bazie użytkowników.
