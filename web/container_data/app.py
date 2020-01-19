@@ -1,4 +1,4 @@
-from os import getenv, environ
+from os import environ
 
 import flask
 from authlib.flask.client import OAuth
@@ -17,12 +17,9 @@ if ENV_FILE:
 AUTH0_CALLBACK_URL = environ.get('AUTH0_CALLBACK_URL')
 AUTH0_CLIENT_ID = environ.get('AUTH0_CLIENT_ID')
 AUTH0_CLIENT_SECRET = environ.get('AUTH0_CLIENT_SECRET')
-AUTH0_DOMAIN = environ.get('AUTH0_DOMAIN')
-AUTH0_BASE_URL = 'https://' + AUTH0_DOMAIN
+AUTH0_BASE_URL = 'https://' + environ.get('AUTH0_DOMAIN')
 AUTH0_AUDIENCE = environ.get('AUTH0_AUDIENCE')
 SECRET_KEY = environ.get('SECRET_KEY')
-SESSION_TIME = int(getenv("SESSION_TIME"))
-INVALIDATE = -1
 
 app = Flask(__name__)
 app.register_blueprint(files, url_prefix='/files')
