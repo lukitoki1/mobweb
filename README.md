@@ -37,6 +37,8 @@ na licencji "BSD-3-Clause".
 Link do repozytorium:
 https://github.com/petronetto/flask-redis-realtime-chat 
 
+Powiadomienia pojawiają się na stronie z listą publikacji.
+
 ### HATEOAS
 
 Postanowiłem od zera zaimplementować własny mechanizm generowania informacji o linkach.

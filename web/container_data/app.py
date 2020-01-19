@@ -1,7 +1,7 @@
 from os import environ
 
 import flask
-from authlib.flask.client import OAuth
+from authlib.integrations.flask_client import OAuth
 from dotenv import find_dotenv, load_dotenv
 from flask import Flask, render_template, jsonify, session
 from six.moves.urllib.parse import urlencode
@@ -65,7 +65,6 @@ def callback():
     resp = auth0.get('userinfo')
     userinfo = resp.json()
 
-    print(userinfo)
     app.logger.error(userinfo)
     session['payload'] = userinfo
     session['profile'] = {
