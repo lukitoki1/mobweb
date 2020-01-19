@@ -3,12 +3,13 @@ from os import environ
 import flask
 from authlib.flask.client import OAuth
 from dotenv import find_dotenv, load_dotenv
-from flask import Flask, make_response, render_template, url_for, jsonify, session
+from flask import Flask, render_template, jsonify, session
 from six.moves.urllib.parse import urlencode
 from werkzeug.exceptions import HTTPException
 
 from .files import files
 from .publications import publications
+from .utils import redirect
 
 ENV_FILE = find_dotenv()
 if ENV_FILE:
@@ -25,8 +26,8 @@ app = Flask(__name__)
 app.register_blueprint(files, url_prefix='/files')
 app.register_blueprint(publications, url_prefix='/publications')
 app.secret_key = SECRET_KEY
-oauth = OAuth(app)
 
+oauth = OAuth(app)
 auth0 = oauth.register(
     'auth0',
     client_id=AUTH0_CLIENT_ID,
@@ -80,9 +81,3 @@ def logout():
     session.clear()
     params = {'returnTo': 'https://web.company.com/', 'client_id': AUTH0_CLIENT_ID}
     return flask.redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
-
-
-def redirect(location):
-    response = make_response('', 303)
-    response.headers["Location"] = url_for(location)
-    return response

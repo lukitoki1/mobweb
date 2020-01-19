@@ -28,6 +28,8 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
+    depends_on:
+      - redis
     env_file:
       - web/.env
     volumes:
@@ -44,6 +46,12 @@ services:
     volumes:
       - ./cdn/container_data:/var/www/app
 
+  redis:
+    container_name: redis_container
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+
   mongodb:
     container_name: mongo_container
     image: mongo:latest
@@ -54,3 +62,4 @@ services:
 
 volumes:
   mongo_data:
+  redis_data:

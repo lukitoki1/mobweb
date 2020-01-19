@@ -1,12 +1,12 @@
 import datetime
-from os import getenv
+from os import environ
 
 import jwt
 from flask import make_response, url_for, session
 from six import wraps
 
-JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
-JWT_SECRET = getenv("JWT_SECRET")
+JWT_SESSION_TIME = int(environ.get('JWT_SESSION_TIME'))
+JWT_SECRET = environ.get("JWT_SECRET")
 
 
 def requires_auth(f):

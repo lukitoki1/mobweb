@@ -1,11 +1,16 @@
 import json
 
 import requests
-from flask import Blueprint, request, render_template, current_app
+from flask import Blueprint, request, render_template, current_app, Response
 
 from .utils import *
 
 publications = Blueprint('publications', __name__)
+
+REDIS_HOST = environ.get('REDIS_HOST')
+REDIS_PORT = int(environ.get('REDIS_PORT'))
+REDIS_PUBLICATIONS_KEY = environ.get('REDIS_PUBLICATIONS_KEY')
+redis_instance = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 
 @publications.route('/')
@@ -52,6 +57,8 @@ def upload():
     username = session['profile']['name']
     token = create_token(username, 'publications', 'upload').decode('utf-8')
     response = requests.post("http://api:5000/publications/upload", data=form, headers={'Authorization': token})
+    if response.status_code == 200:
+        redis_instance.publish(REDIS_PUBLICATIONS_KEY + ' ' + username, form.get('title'))
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
 
@@ -66,3 +73,16 @@ def delete():
                                headers={"Authorization": token})
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
+
+
+@publications.route('/stream')
+def stream():
+    username = session['profile']['name']
+    return Response(event_stream(username), mimetype="text/event-stream")
+
+
+def event_stream(username):
+    pubsub = redis_instance.pubsub(ignore_subscribe_messages=True)
+    pubsub.subscribe(REDIS_PUBLICATIONS_KEY + ' ' + username)
+    for message in pubsub.listen():
+        yield 'data: %s\n\n' % message['data'].decode()

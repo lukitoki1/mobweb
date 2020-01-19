@@ -2,6 +2,7 @@
 
 ### Najważniejsze zmiany
 * implementacja logowania za pomocą usługi `Auth0`,
+* implementacja komunikatów o dodaniu nowej publikacji,
 * aplikacja kliencka uwierzytelnia się w serwerze API tokenem, a nie loginem i hasłem.
 
 ### Uruchomienie
@@ -26,6 +27,15 @@ Aplikacja dostępna jest pod adresem https://web.company.com.
 Przykładowe dane logowania umieszczone w bazie:
 * login: admin@gmail.com
 * hasło: admin
+
+### Komunikaty
+
+Mechanizm powiadamiania o dodanej publikacji opracowany został
+na podstawie kodu z repozytorium `flask-redis-realtime-chat` udostępnianego
+na licencji "BSD-3-Clause".
+
+Link do repozytorium:
+https://github.com/petronetto/flask-redis-realtime-chat 
 
 ### HATEOAS
 
