@@ -1,19 +1,37 @@
-<!doctype html>
-<html lang="pl">
+<!DOCTYPE html>
+<html>
+
 <head>
-    <meta charset="utf-8"/>
-    <title>Sign In</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Notes App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/Login-Form-Clean.css">
+    <link rel="stylesheet" href="../assets/css/Navigation-Clean.css">
+    <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
+
 <body>
-<div>
-    <h2 class="title">Sign in</h2>
+<div class="login-clean" style="background-color: rgb(255,255,255);">
+    <form method="post" action="/login">
+        <div class="form-row text-center justify-content-center" style="font-size: 9px;">
+            <div class="col" style="padding-right: 0;padding-left: 0;">
+                <h2 class="text-center">Log In</h2>
+            </div>
+        </div>
+        <div class="form-group">
+            <input class="form-control" type="text" name="username" placeholder="Username" required="required"
+                   style="padding-right: 0;padding-left: 0;"></div>
+        <div class="form-group">
+            <input class="form-control" type="password" name="password" placeholder="Password" required="required">
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary btn-block" type="submit">Log In</button>
+        </div>
+        <a class="forgot" href="/signup">Sign Up</a></form>
 </div>
-<div class="container">
-    <form class="form" action="https://web.company.com/auth" method="POST">
-        <input type="text" name="username" placeholder="Username" class="fieldInput"/>
-        <input type="password" name="password" placeholder="Password" class="fieldInput"/>
-        <input type="submit" class="button" id="sendButton" value="Sign in"/>
-    </form>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

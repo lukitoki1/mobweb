@@ -1,19 +1,16 @@
 from os import getenv
 
-import basicauth
 import requests
 from flask import Flask, request, make_response, render_template, url_for
 
 from .database import Sessions
-from .files import files
-from .publications import publications
+from .notes import notes
 
 SESSION_TIME = int(getenv("SESSION_TIME"))
 INVALIDATE = -1
 
 app = Flask(__name__)
-app.register_blueprint(files, url_prefix='/files')
-app.register_blueprint(publications, url_prefix='/publications')
+app.register_blueprint(notes, url_prefix='/publications')
 
 session = Sessions()
 invalid_session_surpass_endpoints = ['login', 'auth', 'logout']

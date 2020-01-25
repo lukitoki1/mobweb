@@ -1,23 +1,28 @@
-<!doctype html>
-<html lang="pl">
+<!DOCTYPE html>
+<html>
+
 <head>
-    <meta charset="utf-8"/>
-    <title>File Upload</title>
-    <link href="../static/style.css" rel="stylesheet" type="text/css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Notes App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/Login-Form-Clean.css">
+    <link rel="stylesheet" href="../assets/css/Navigation-Clean.css">
+    <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
+
 <body>
-<div class="title-div">
-    <h2 class="title">Message</h2>
+<div class="login-clean" style="background-color: rgb(255,255,255);">
+    <div class="container shadow" style="width: 50%;padding: 40px;background-color: #ffffff;">
+        <h2 class="text-center">Message</h2>
+        <p class="d-lg-flex justify-content-lg-center" style="font-size: 20px;">{{ message }}</p>
+        <a href=/notes>
+            <button class="btn btn-primary btn-block" type="submit">Return</button>
+        </a>
+    </div>
 </div>
-<div>
-    <ul class="no-bullets">
-        <li>{{ communicate }}</li>
-        <li>
-            <a href={{ endpoint }}>
-                <button>Return</button>
-            </a>
-        </li>
-    </ul>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

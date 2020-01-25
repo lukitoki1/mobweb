@@ -1,15 +1,14 @@
 import json
 
-import basicauth
 import requests
 from flask import Blueprint, request, render_template, current_app
 
 from .utils import *
 
-publications = Blueprint('publications', __name__)
+notes = Blueprint('notes', __name__)
 
 
-@publications.route('/')
+@notes.route('/')
 def welcome():
     username, password = get_credentials(request)
     basic_auth = basicauth.encode(username, password)
@@ -37,13 +36,13 @@ def welcome():
                            username=username)
 
 
-@publications.route('/new', methods=['GET'])
+@notes.route('/new', methods=['GET'])
 def new():
     username, password = get_credentials(request)
     return render_template('form.html', username=username)
 
 
-@publications.route('/upload', methods=['POST'])
+@notes.route('/upload', methods=['POST'])
 def upload():
     form = request.form.to_dict()
     current_app.logger.error(form)
@@ -55,7 +54,7 @@ def upload():
                            endpoint=url_for('publications.welcome'))
 
 
-@publications.route('/delete', methods=['GET'])
+@notes.route('/delete', methods=['GET'])
 def delete():
     pid = request.args.get('pid')
     username, password = get_credentials(request)

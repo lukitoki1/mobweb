@@ -7,24 +7,10 @@ services:
     depends_on:
       - web
       - cdn
-      - api
     ports:
       - "443:443"
     volumes:
       - ./nginx-uwsgi.conf:/etc/nginx/nginx.conf
-
-  api:
-    container_name: api_container
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    env_file:
-      - api/.env
-      - .env/redis.env
-    depends_on:
-      - redis
-    volumes:
-      - ./api/container_data:/var/www/app
 
   web:
     container_name: web_container
