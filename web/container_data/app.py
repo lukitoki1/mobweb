@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.register_blueprint(notes, url_prefix='/publications')
 
 session = Sessions()
-invalid_session_surpass_endpoints = ['login', 'auth', 'logout']
+invalid_session_surpass_endpoints = ['login', 'logout']
 
 
 @app.before_request
@@ -62,7 +62,7 @@ def logout():
 
 
 def invalidate_session():
-    response = redirect(".login")
+    response = redirect("login")
     response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
     return response
 

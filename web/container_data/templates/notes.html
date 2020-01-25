@@ -40,11 +40,11 @@
                 <div class="form-group">
                     <div class="col d-flex align-items-center" style="padding-right: 0px;">
                         <div class="custom-control custom-control-inline custom-switch"><input
-                                class="custom-control-input" type="checkbox" id="private" name="private"
+                                class="custom-control-input" type="checkbox" id="restricted" name="restricted"
                                 onchange="document.getElementById('users').disabled = !this.checked;"><label
-                                class="custom-control-label" for="private">Private</label></div>
+                                class="custom-control-label" for="restricted">Restricted</label></div>
                         <textarea
-                                id="users" disabled="disabled" required="required"
+                                id="users" disabled="disabled"
                                 class="form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill"
                                 placeholder="Users (divided by comma)" name="users"
                                 style="height: 50px;min-height: 50px;"></textarea></div>
@@ -60,7 +60,7 @@
             <div class="card-body">
                 <p class="card-text" style="font-size: 24px;margin-bottom: 0px;">{{ note['note'] }}</p>
                 <p class="lead d-lg-flex justify-content-lg-start card-text"
-                   style="font-size: 18px;">{{ note['users']|join(', ') }}</p>
+                   style="font-size: 18px;"><strong>{{ note['owner'] }}, </strong>{{ note['users']|join(', ') }}</p>
             </div>
         </div>
     {% endfor %}
