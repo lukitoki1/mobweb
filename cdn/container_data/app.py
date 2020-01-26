@@ -13,39 +13,33 @@ app = Flask(__name__)
 notes_db = Notes()
 
 
-@app.before_request
-def check_token_valid():
-    valid, message = validate_and_decode_token(request.headers.get('Authorization'), request.endpoint)
-    if not valid:
-        return message
-    return
-
-
 @app.route('/', methods=['GET'])
 def list():
-    username = decode_token(request.headers.get('Authorization'))
+    valid, data = validate_token(request.headers.get('Authorization'), 'list')
+    if not valid:
+        return data
 
-    notes_list = notes_db.list(username)
+    notes_list = notes_db.list(data)
     return json.dumps(notes_list)
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/', methods=['POST'])
 def upload():
+    valid, data = validate_token(request.headers.get('Authorization'), 'upload')
+    if not valid:
+        return data
+
     note = request.form.get('note')
     if not note:
         return "No note provided", 400
 
-    owner = request.form.get('owner')
-    if not owner:
-        return "No owner specified", 400
-
     users = list(map(lambda x: x.strip(), request.form.get('users', '').split(',')))
 
-    notes_db.insert(note, owner, users)
+    notes_db.insert(note, data, users)
     return 'Publication uploaded', 200
 
 
-def validate_and_decode_token(token, action_context):
+def validate_token(token, proper_action):
     if token is None:
         return False, ('No token', 401)
 
@@ -61,12 +55,11 @@ def validate_and_decode_token(token, action_context):
     action = payload.get('action')
     if action is None:
         return False, ('Missing action', 400)
-    if action != action_context:
+    if action != proper_action:
         return False, (
-            f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for '
-            f'the URL', 400)
+            f'Action \"{action}\" specified in the token does not match \"{proper_action}\"', 400)
 
-    return True, ''
+    return True, username
 
 
 def decode_token(token):

@@ -1,9 +1,9 @@
 import datetime
-import json
 from os import getenv
 from uuid import uuid4
 
 import redis
+from flask_bcrypt import Bcrypt
 
 REDIS_HOST = getenv('REDIS_HOST')
 REDIS_PORT = int(getenv('REDIS_PORT'))
@@ -13,39 +13,41 @@ class Sessions:
     exp = datetime.timedelta(minutes=5)
 
     def __init__(self):
-        self.db = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+        self.db = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1, charset='utf-8', decode_responses=True)
 
-    def create(self, username, password):
+    def create(self, username):
         session_id = str(uuid4())
-        user_password_json = json.dumps({'username': username, 'password': password})
-        self.db.set(session_id, user_password_json, ex=Sessions.exp)
+        self.db.set(session_id, username, ex=Sessions.exp)
         return session_id
-
-    def check(self, session_id):
-        if session_id is None or session_id not in self.db:
-            return False
-        else:
-            return True
 
     def invalidate(self, session_id):
         self.db.delete(session_id)
 
-    def get_credentials(self, session_id) -> (str, str):
-        json_data = self.db.get(session_id)
-        user_password_dict = json.loads(json_data)
-        return user_password_dict['username'], user_password_dict['password']
+    def get_username(self, session_id) -> str:
+        return self.db.get(session_id)
 
 
 class Users:
-    def __init__(self):
-        self.db = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-        self.populate()
+    def __init__(self, bcrypt: Bcrypt):
+        self.db = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, charset='utf-8', decode_responses=True)
+        self.bcrypt = bcrypt
 
-    def populate(self):
-        self.db.set("test", "123")
-        self.db.set('admin', 'admin')
+    def insert(self, username, password):
+        self.db.set(username, self.bcrypt.generate_password_hash(password))
 
-    def check(self, login, password):
-        if self.db.get(login) is None or self.db.get(login).decode("UTF-8") != password:
+    def update(self, username, old_password, new_password):
+        if not self.check_credentials_valid(username, old_password):
+            return False
+        self.insert(username, new_password)
+        return True
+
+    def check_credentials_valid(self, username, password):
+        password_hash = self.db.get(username)
+        if not self.db.get(username) or not self.bcrypt.check_password_hash(password_hash, password):
+            return False
+        return True
+
+    def check_username_available(self, username):
+        if not self.db.get(username):
             return False
         return True

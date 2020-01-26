@@ -19,16 +19,19 @@
                 <h2 class="text-center">Log In</h2>
             </div>
         </div>
-        <div class="form-group">
-            <input class="form-control" type="text" name="username" placeholder="Username" required="required"
-                   style="padding-right: 0;padding-left: 0;"></div>
-        <div class="form-group">
-            <input class="form-control" type="password" name="password" placeholder="Password" required="required">
-        </div>
-        {% if login_alert is defined %}
+        <div class="form-group">{{ form.username.label }}:
+            {{ form.username(class="form-control") }}</div>
+        {% for error in form.username.errors %}
             <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ login_alert }}</span></div>
-        {% endif %}
+                <span>{{ error }}</span></div>
+        {% endfor %}
+        <div class="form-group">{{ form.password.label }}:
+            {{ form.password(class="form-control") }}
+        </div>
+        {% for error in form.password.errors %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ error }}</span></div>
+        {% endfor %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Log In</button>
         </div>

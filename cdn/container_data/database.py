@@ -12,7 +12,7 @@ MONGO_HOSTNAME = os.getenv('MONGO_HOSTNAME')
 class Notes:
     def __init__(self):
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
-        self.notes = self.db.notes
+        self.notes = self.db.notes_page
 
         self.notes.create_index([('note', pymongo.DESCENDING), ('owner', pymongo.ASCENDING)], unique=True)
 
@@ -29,5 +29,5 @@ class Notes:
         if user is None:
             return []
 
-        query_result = self.notes.find({'$or': [{'owner': user}, {'users': user}]}, {'_id': 0, 'timestamp': 0})
+        query_result = self.notes.find({'$or': [{'owner': user}, {'users': user}]}, {'_id': 0}).sort({'timestamp': 1})
         return list(query_result)

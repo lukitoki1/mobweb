@@ -14,30 +14,30 @@
 <body>
 <div class="login-clean" style="background-color: rgb(255,255,255);">
     <form method="post" action="/reset">
-        <h2 class="sr-only">Login Form</h2>
         <div class="form-row">
             <div class="col" style="padding-right: 0;padding-left: 0;">
                 <h2 class="text-center">Change Password</h2>
             </div>
         </div>
-        <div class="form-group">
-            <input class="form-control" type="password" name="old_password" placeholder="Old Password"
-                   required="required">
+        <div class="form-group">{{ form.old_password.label }}:
+            {{ form.old_password(class="form-control") }}
         </div>
-        {% if old_password_alert is defined %}
+        {% for error in form.old_password.errors %}
             <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ old_password_alert }}</span></div>
-        {% endif %}
-        <div class="form-group">
-            <input class="form-control" type="password" name="new_password"
-                   placeholder="New Password" required="required"></div>
-        <div class="form-group">
-            <input class="form-control" type="password" name="repeat_new_password"
-                   placeholder="Repeat New Password"></div>
-        {% if new_password_alert is defined %}
+                <span>{{ error }}</span></div>
+        {% endfor %}
+        <div class="form-group">{{ form.new_password.label }}:
+            {{ form.new_password(class="form-control") }}</div>
+        {% for error in form.new_password.errors %}
             <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ new_password_alert }}</span></div>
-        {% endif %}
+                <span>{{ error }}</span></div>
+        {% endfor %}
+        <div class="form-group">{{ form.new_password_repeat.label }}:
+            {{ form.new_password_repeat(class="form-control") }}</div>
+        {% for error in form.new_password_repeat.errors %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ error }}</span></div>
+        {% endfor %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Change Password</button>
         </div>
