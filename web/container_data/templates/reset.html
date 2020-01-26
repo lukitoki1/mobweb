@@ -24,16 +24,20 @@
             <input class="form-control" type="password" name="old_password" placeholder="Old Password"
                    required="required">
         </div>
-        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-            <span>{{ old_password_alert }}</span></div>
+        {% if old_password_alert is defined %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ old_password_alert }}</span></div>
+        {% endif %}
         <div class="form-group">
             <input class="form-control" type="password" name="new_password"
                    placeholder="New Password" required="required"></div>
         <div class="form-group">
             <input class="form-control" type="password" name="repeat_new_password"
                    placeholder="Repeat New Password"></div>
-        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-            <span>{{ new_password_alert }}</span></div>
+        {% if new_password_alert is defined %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ new_password_alert }}</span></div>
+        {% endif %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Change Password</button>
         </div>

@@ -22,12 +22,16 @@
         </div>
         <div class="form-group"><input class="form-control" type="text" name="username" placeholder="Username"
                                        required="required"></div>
-        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-            <span>{{ username_alert }}</span></div>
+        {% if username_alert is defined %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ username_alert }}</span></div>
+        {% endif %}
         <div class="form-group"><input class="form-control" type="password" name="password" placeholder="Password"
                                        required="required"></div>
-        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-            <span>{{ password_alert }}</span></div>
+        {% if password_alert is defined %}
+            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                <span>{{ password_alert }}</span></div>
+        {% endif %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Sign Up</button>
         </div>

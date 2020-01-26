@@ -21,7 +21,8 @@
                  id="navcol-1">
                 <ul class="nav navbar-nav ml-auto">
                     <li class="nav-item" role="presentation"><a class="nav-link active"
-                                                                style="background-color: #f8f8f8;">username</a></li>
+                                                                style="background-color: #f8f8f8;">{{ username }}</a>
+                    </li>
                     <li class="nav-item" role="presentation"><a class="nav-link" href="/reset">Change Password</a></li>
                     <li class="nav-item" role="presentation"><a class="nav-link" href="/logout">Log Out</a></li>
                 </ul>
@@ -32,7 +33,7 @@
 <div class="container">
     <div class="card" style="margin-bottom: 16px;margin-top: 16px;">
         <div class="card-body bg-light">
-            <form method="post" action="/add">
+            <form method="post" action="/upload">
                 <div class="form-group d-flex"><textarea
                         class="bg-white form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill"
                         placeholder="Note" name="note" style="min-height: 50px;height: 50px;"
