@@ -19,7 +19,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - web/.env
-      - .env/redis.env
     depends_on:
       - redis
     volumes:

@@ -1,7 +1,5 @@
 from wtforms import Form, StringField, validators, PasswordField
 
-POLISH_CHARSET = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'
-
 
 class LoginForm(Form):
     username = StringField(
@@ -13,7 +11,7 @@ class LoginForm(Form):
         'Password',
         [validators.Length(8, 30, message='Incorrect password length'),
          validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
-                           "Incorrect password data")])
+                           message="Incorrect password data")])
 
 
 class SignupForm(Form):
@@ -26,7 +24,7 @@ class SignupForm(Form):
         'Password',
         [validators.Length(8, 30, message='Password has to be between 8 and 30 characters long'),
          validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
-                           "Password has to include at least one small character, one big character, one digit and one special character")]
+                           message="Password has to include at least one small character, one big character, one digit and one special character")]
     )
 
 
@@ -35,13 +33,13 @@ class ResetForm(Form):
         'Old Password',
         [validators.Length(8, 30, message='Incorrect password length'),
          validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
-                           "Incorrect password data")]
+                           message="Incorrect password data")]
     )
     new_password = PasswordField(
         'New Password',
         [validators.Length(8, 30, message='Password has to be between 8 and 30 characters long'),
          validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
-                           "Password has to include at least one small character, one big character, one digit and one special character")]
+                           message="Password has to include at least one small character, one big character, one digit and one special character")]
     )
     new_password_repeat = PasswordField(
         'Repeat New Password',
@@ -51,7 +49,7 @@ class ResetForm(Form):
 
 
 class NoteForm(Form):
-    note = StringField('Note', [validators.DataRequired('No note provided')])
+    note = StringField('Note', [validators.DataRequired(message='No note provided')])
     users = StringField(
         'Users',
         [validators.Optional(),

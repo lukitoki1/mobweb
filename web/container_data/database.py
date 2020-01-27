@@ -23,7 +23,9 @@ class Sessions:
     def invalidate(self, session_id):
         self.db.delete(session_id)
 
-    def get_username(self, session_id) -> str:
+    def get_username(self, session_id):
+        if session_id is None:
+            return None
         return self.db.get(session_id)
 
 

@@ -6,14 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Notes App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/css/Login-Form-Clean.css">
-    <link rel="stylesheet" href="../assets/css/Navigation-Clean.css">
-    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="../static/css/Login-Form-Clean.css">
+    <link rel="stylesheet" href="../static/css/Navigation-Clean.css">
+    <link rel="stylesheet" href="../static/css/styles.css">
 </head>
 
 <body>
 <div class="login-clean" style="background-color: rgb(255,255,255);">
     <form method="post" action="/login">
+        {{ form.csrf_token }}
         <div class="form-row text-center justify-content-center" style="font-size: 9px;">
             <div class="col" style="padding-right: 0;padding-left: 0;">
                 <h2 class="text-center">Log In</h2>

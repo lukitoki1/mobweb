@@ -19,6 +19,7 @@ SESSION_TIME = int(getenv("SESSION_TIME"))
 INVALIDATE = -1
 
 app = Flask(__name__)
+app.static_folder = 'static'
 app.config.update(
     SECRET_KEY=os.urandom(24),
     SESSION_COOKIE_SECURE=True,
@@ -31,7 +32,7 @@ csrf = CSRFProtect(app)
 
 sessions_db = Sessions()
 users_db = Users(bcrypt)
-invalid_session_surpass_endpoints = ['login', 'logout', 'signup']
+invalid_session_surpass_endpoints = ['login_page', 'login', 'signup_page', 'signup', 'logout', 'static']
 
 
 @app.before_request
@@ -137,7 +138,7 @@ def logout():
     if session_id:
         sessions_db.invalidate(session_id)
 
-    response = redirect("login")
+    response = redirect("login_page")
     response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
     return response
 
