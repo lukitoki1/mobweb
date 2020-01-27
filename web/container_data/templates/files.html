@@ -15,7 +15,7 @@
     <ul>
         {% for file in listOfFiles %}
             <li><a class="list-group-item list-group-item-action" target="_blank"
-                   href="https://web.company.com/files/download?filename={{ file }}">{{ file }}</a>
+                   href="https://web.company.com/files/{{ file }}">{{ file }}</a>
                 <a class="list-group-item list-group-item-action"
                    href="https://web.company.com/files/delete?filename={{ file }}">( delete )</a>
             </li>

@@ -14,7 +14,7 @@ def create_token(username, datatype, action):
                       JWT_SECRET, "HS256")
 
 
-def validate_and_decode_token(token, action_context):
+def validate_token(token):
     if token is None:
         return False, ('No token', 401)
 
@@ -30,10 +30,10 @@ def validate_and_decode_token(token, action_context):
     action = payload.get('action')
     if action is None:
         return False, ('Missing action', 404)
-    if action != action_context:
-        return False, (
-            f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for '
-            f'the URL', 401)
+    # if action != action_context:
+    #     return False, (
+    #         f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for '
+    #         f'the URL', 401)
 
     return True, username
 

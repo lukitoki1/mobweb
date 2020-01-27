@@ -2,7 +2,6 @@ from os import environ
 
 import flask
 from authlib.integrations.flask_client import OAuth
-from dotenv import find_dotenv, load_dotenv
 from flask import Flask, render_template, jsonify, session
 from six.moves.urllib.parse import urlencode
 from werkzeug.exceptions import HTTPException
@@ -10,10 +9,6 @@ from werkzeug.exceptions import HTTPException
 from .files import files
 from .publications import publications
 from .utils import redirect
-
-ENV_FILE = find_dotenv()
-if ENV_FILE:
-    load_dotenv(ENV_FILE)
 
 AUTH0_CALLBACK_URL = environ.get('AUTH0_CALLBACK_URL')
 AUTH0_CLIENT_ID = environ.get('AUTH0_CLIENT_ID')

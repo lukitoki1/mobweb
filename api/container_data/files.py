@@ -6,22 +6,22 @@ from .utils import create_token, wrap_response, get_username_from_token
 files = Blueprint('files', __name__)
 
 
-@files.route('/list', methods=['GET'])
+@files.route('/', methods=['GET'])
 def list():
-    pid = request.args.get('pid')
+    type = request.args.get('type')
     username = get_username_from_token(request.headers.get('Authorization'))
     params = {'username': username}
-    if pid is not None:
-        params['pid'] = pid
+    if type is not None:
+        if type == 'unattached':
+            params['pid'] = -1
 
     list_token = create_token(username, 'files', 'list').decode('utf-8')
     response = requests.get("http://cdn:5000/files/list", headers={"Authorization": list_token}, params=params)
     return wrap_response(response)
 
 
-@files.route('/download', methods=['GET'])
-def download():
-    filename = request.args.get('filename')
+@files.route('/<filename>', methods=['GET'])
+def download(filename):
     username = get_username_from_token(request.headers.get('Authorization'))
     download_token = create_token(username, 'files', 'download').decode('utf-8')
     response = requests.get('http://cdn:5000/files/download', params={'filename': filename, 'username': username},
@@ -29,7 +29,7 @@ def download():
     return wrap_response(response)
 
 
-@files.route('/upload', methods=['POST'])
+@files.route('/', methods=['POST'])
 def upload():
     f = request.files.get('file')
     username = get_username_from_token(request.headers.get('Authorization'))
@@ -39,34 +39,12 @@ def upload():
     return wrap_response(response)
 
 
-@files.route('/delete', methods=['DELETE'])
-def delete():
-    filename = request.args.get('filename')
+@files.route('/<filename>', methods=['DELETE'])
+def delete(filename):
     username = get_username_from_token(request.headers.get('Authorization'))
     delete_token = create_token(username, 'files', 'delete').decode('utf-8')
     response = requests.delete('http://cdn:5000/files/delete', headers={'Authorization': delete_token},
                                params={'filename': filename, 'username': username})
-    return wrap_response(response)
-
-
-@files.route('/attach', methods=['PATCH'])
-def attach():
-    filename = request.args.get('filename')
-    pid = request.args.get('pid')
-    username = get_username_from_token(request.headers.get('Authorization'))
-    attach_token = create_token(username, 'files', 'attach').decode('utf-8')
-    response = requests.patch('http://cdn:5000/files/attach', headers={'Authorization': attach_token},
-                              params={'filename': filename, 'pid': pid, 'username': username})
-    return wrap_response(response)
-
-
-@files.route('/detach', methods=['PATCH'])
-def detach():
-    filename = request.args.get('filename')
-    username = get_username_from_token(request.headers.get('Authorization'))
-    detach_token = create_token(username, 'files', 'detach').decode('utf-8')
-    response = requests.patch('http://cdn:5000/files/detach', headers={'Authorization': detach_token},
-                              params={'filename': filename, 'username': username})
     return wrap_response(response)
 
 

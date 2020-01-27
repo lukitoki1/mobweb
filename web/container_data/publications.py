@@ -19,7 +19,7 @@ redis_instance = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 def welcome():
     username = session['profile']['name']
     token = create_token(username, 'publications', 'list').decode('utf-8')
-    publications_response = requests.get("http://api:5000/publications/list", headers={"Authorization": token})
+    publications_response = requests.get("http://api:5000/publications", headers={"Authorization": token})
     publications_list = json.loads(publications_response.content)
 
     for publication in publications_list:
@@ -35,8 +35,8 @@ def welcome():
         publication['files'] = files
 
     token = create_token(username, 'files', 'list').decode('utf-8')
-    files_response = requests.get("http://api:5000/files/list", headers={"Authorization": token},
-                                  params={'pid': '-1'})
+    files_response = requests.get("http://api:5000/files", headers={"Authorization": token},
+                                  params={'type': 'unattached'})
     files_list = json.loads(files_response.content)
 
     return render_template("publications.html", publications=publications_list, files_list=files_list,
@@ -57,21 +57,45 @@ def upload():
     current_app.logger.error(form)
     username = session['profile']['name']
     token = create_token(username, 'publications', 'upload').decode('utf-8')
-    response = requests.post("http://api:5000/publications/upload", data=form, headers={'Authorization': token})
+    response = requests.post("http://api:5000/publications", data=form, headers={'Authorization': token})
     if response.status_code == 200:
         redis_instance.publish(REDIS_PUBLICATIONS_KEY + ' ' + username, form.get('title'))
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
 
 
-@publications.route('/delete', methods=['GET'])
+@publications.route('/<pid>', methods=['GET'])
 @requires_auth
-def delete():
-    pid = request.args.get('pid')
+def delete(pid):
     username = session['profile']['name']
     token = create_token(username, 'publications', 'delete').decode('utf-8')
-    response = requests.delete("http://api:5000/publications/delete", params={'pid': pid},
-                               headers={"Authorization": token})
+    response = requests.delete(f"http://api:5000/publications/{pid}", headers={"Authorization": token})
+    return render_template('callback.html', communicate=response.content.decode('utf-8'),
+                           endpoint=url_for('publications.welcome'))
+
+
+@publications.route('/attach', methods=['POST'])
+@requires_auth
+def attach():
+    username = session['profile']['name']
+    filename = request.form.get('filename')
+    pid = request.form.get('pid')
+    token = create_token(username, 'files', 'attach').decode('utf-8')
+    if filename == '' or pid == '' or filename is None:
+        return render_template('callback.html', communicate='Incomplete form data',
+                               endpoint=url_for('files.welcome'))
+
+    response = requests.post(f"http://api:5000/publications/{pid}/files/{filename}", headers={"Authorization": token})
+    return render_template('callback.html', communicate=response.content.decode('utf-8'),
+                           endpoint=url_for('publications.welcome'))
+
+
+@publications.route('/<pid>/files/<filename>', methods=['GET'])
+@requires_auth
+def detach(pid, filename):
+    username = session['profile']['name']
+    token = create_token(username, 'files', 'detach').decode('utf-8')
+    response = requests.delete(f"http://api:5000/publications/{pid}/files/{filename}", headers={"Authorization": token})
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
 

@@ -68,18 +68,20 @@ class Publications:
     def upload(self, username, title, authors: list, year):
         self.publications.insert_one({'username': username, 'title': title, 'authors': authors, 'year': year})
 
-    def list(self, username):
-        query_result = self.publications.find({'username': username})
-        query_result_list = list(query_result)
-
-        if len(query_result_list) == 0:
+    def list(self, username, pid):
+        if pid is None or pid == '':
+            query_result = self.publications.find({'username': username})
+            query_result_list = list(query_result)
+            for publications_dict in query_result_list:
+                publications_dict['pid'] = str(publications_dict['_id'])
+                del publications_dict['_id']
             return query_result_list
-
-        for publications_dict in query_result_list:
-            publications_dict['pid'] = str(publications_dict['_id'])
-            del publications_dict['_id']
-
-        return query_result_list
+        query_result = self.publications.find_one({'username': username, 'pid': pid})
+        if query_result:
+            query_result['pid'] = str(query_result['_id'])
+            del query_result['_id']
+            return query_result
+        return []
 
     def delete(self, username, pid: str):
         self.publications.delete_one({'username': username, '_id': ObjectId(pid)})

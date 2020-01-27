@@ -10,8 +10,9 @@ publications = Blueprint('publications', __name__)
 @publications.route('/list', methods=['GET'])
 def list():
     username = request.args.get('username')
+    pid = request.args.get('pid')
 
-    publications_list = publications_db.list(username)
+    publications_list = publications_db.list(username, pid)
     if publications_list is None or len(publications_list) == 0:
         return json.dumps([])
     return json.dumps(publications_list)
