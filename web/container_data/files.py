@@ -5,7 +5,7 @@ import flask
 import requests
 from flask import render_template, send_file, request
 
-from .utils import *
+from utils import *
 
 files = flask.Blueprint('files', __name__)
 

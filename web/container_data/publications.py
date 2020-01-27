@@ -4,7 +4,7 @@ import redis
 import requests
 from flask import Blueprint, request, render_template, current_app, Response
 
-from .utils import *
+from utils import *
 
 publications = Blueprint('publications', __name__)
 
@@ -85,7 +85,7 @@ def attach():
         return render_template('callback.html', communicate='Incomplete form data',
                                endpoint=url_for('files.welcome'))
 
-    response = requests.post(f"http://api:5000/publications/{pid}/files/{filename}", headers={"Authorization": token})
+    response = requests.put(f"http://api:5000/publications/{pid}/files/{filename}", headers={"Authorization": token})
     return render_template('callback.html', communicate=response.content.decode('utf-8'),
                            endpoint=url_for('publications.welcome'))
 

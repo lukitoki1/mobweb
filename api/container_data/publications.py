@@ -61,7 +61,7 @@ def delete(pid):
     return wrap_response(response)
 
 
-@publications.route('/<pid>/files/<filename>', methods=['POST'])
+@publications.route('/<pid>/files/<filename>', methods=['PUT'])
 def attach(pid, filename):
     valid, message_or_username = decode_token(request.headers.get('Authorization'), 'files.attach')
     if not valid:

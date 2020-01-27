@@ -1,12 +1,12 @@
 # Kamień milowy nr 5
 
-### Najważniejsze zmiany
+### Najważniejsze zmiany i poprawione błędy
 
 * Modernizacja dostępu do zasobów poprzez API - implementacja struktury
-  REST API odzwierciedlającej strukturę zasobów na serwerze,
-* implementacja odpowiednich kodów oraz komunikatów błędów dla błędnych
-  danych dostarczanych API,
+  REST API odzwierciedlającej strukturę zasobów na serwerze (więcej niżej),
 * reagowanie komunikatem na problem związany z łącznością z API,
+* postawienie serwisu web na serwerze `gunicorn` z workerem `gevent`,
+  co zapobiega blokowaniu serwera,
 * ciasteczko `HttpOnly`.
   
 ### API
@@ -16,6 +16,8 @@ który który zawiera token `JWT`.
 * Użytkownik może zapytać REST API wyłącznie 
 o zasoby należące do użytkownika sprecyzowanego w żetonie (stąd brana jest informacja, 
 czyj zasób zwrócić w odpowiedzi).
+* Nazwy plików są unikalne w ramach pojedynczego użytkownika, dlatego służą
+za ID plików.
 
 #### Obsługa plików
 
@@ -23,12 +25,12 @@ czyj zasób zwrócić w odpowiedzi).
 GET /files - lista
 GET /files?type=<type> - lista z parametrem filtrowania
 ```
-gdzie `type` to `all` lub `unattached`
+gdzie `type` = `unattached` -> pliki nieprzypisane do żadnej publikacji
 
 ```http request
-GET /files/<fid> - pobranie
+GET /files/<filename> - pobranie
 POST /files - wysłanie
-DELETE /files/<fid> - usunięcie
+DELETE /files/<filename> - usunięcie
 ```
 
 #### Obsługa publikacji
@@ -39,8 +41,8 @@ GET /publications/<pid> - informacje o konkretnej publikacji
 POST /publications - wysłanie
 DELETE /publications/<pid> - usunięcie
 
-POST /publications/<pid>/files/<fid> - załączenie pliku
-DELETE /publications/<pid>/files/<fid> - odłączenie pliku
+PUT /publications/<pid>/files/<filename> - załączenie pliku
+DELETE /publications/<pid>/files/<filename> - odłączenie pliku
 ```
 
 Usunięcię publikacji powoduje automatyczne odłączenie wszystkich jej plików.
@@ -95,13 +97,13 @@ następującego schematu:
         'year': '',
         '_links':{
             'publication': {
-                'delete': '/publications/delete?pid=...'
+                'delete': '/publications/<pid>'
             },
             'files': {
                 {
                     'filename': '',
-                    'download': '/files/download?...',
-                    'delete': '/files/delete?...'
+                    'download': '/files/<filename>',
+                    'detach': '/publications/<pid>/files/<filename>'
                 },
                 ...      
             }   

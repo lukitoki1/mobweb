@@ -7,9 +7,9 @@ from requests import HTTPError
 from six.moves.urllib.parse import urlencode
 from werkzeug.exceptions import HTTPException
 
-from .files import files
-from .publications import publications
-from .utils import redirect
+from files import files
+from publications import publications
+from utils import redirect
 
 AUTH0_CALLBACK_URL = environ.get('AUTH0_CALLBACK_URL')
 AUTH0_CLIENT_ID = environ.get('AUTH0_CLIENT_ID')
