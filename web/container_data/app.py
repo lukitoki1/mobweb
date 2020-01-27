@@ -49,7 +49,7 @@ def notes_page():
     list_token = create_token(username, 'list')
     response = requests.get('http://cdn:5000/', headers={'Authorization': list_token})
 
-    if str(response.status_code)[0] is not 2:
+    if str(response.status_code)[0] != 2:
         return render_template('callback.html', message=response.content)
 
     notes = json.loads(response.content)
@@ -62,7 +62,7 @@ def upload():
     upload_token = create_token(username, 'upload')
     response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token})
 
-    if str(response.status_code)[0] is not 2:
+    if str(response.status_code)[0] != 2:
         return render_template('callback.html', message=response.content)
 
     return redirect('notes_page')
