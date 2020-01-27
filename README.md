@@ -1,9 +1,48 @@
-# Kamień milowy nr 4
+# Kamień milowy nr 5
 
 ### Najważniejsze zmiany
-* implementacja logowania za pomocą usługi `Auth0`,
-* implementacja komunikatów o dodaniu nowej publikacji,
-* aplikacja kliencka uwierzytelnia się w serwerze API tokenem, a nie loginem i hasłem.
+
+* Modernizacja dostępu do zasobów poprzez API - implementacja struktury
+  REST API odzwierciedlająca strukturę danych na serwerze,
+* implementacja odpowiednich kodów oraz komunikatów błędów dla błędnych
+  danych lub problemów z API,
+* ciasteczko `HttpOnly`.
+  
+### API
+
+* Każde zapytanie do serwera API musi zostać opatrzone nagłówkiem `Authorization`,
+który który zawiera token `JWT`. 
+* Użytkownik może zapytać REST API wyłącznie 
+o zasoby należące do użytkownika sprecyzowanego w żetonie (stąd brana jest informacja, 
+czyj zasób zwrócić w odpowiedzi).
+
+#### Obsługa plików
+
+```http request
+GET /files - lista
+GET /files?type=<type> - lista z parametrem filtrowania
+```
+gdzie `type` to `all` lub `unattached`
+
+```http request
+GET /files/<fid> - pobranie
+POST /files - wysłanie
+DELETE /files/<fid> - usunięcie
+```
+
+#### Obsługa publikacji
+
+```http request
+GET /publications - lista
+GET /publications/<pid> - informacje o konkretnej publikacji
+POST /publications - wysłanie
+DELETE /publications/<pid> - usunięcie
+
+POST /publications/<pid>/files/<fid> - załączenie pliku
+DELETE /publications/<pid>/files/<fid> - odłączenie pliku
+```
+
+Usunięcię publikacji powoduje automatyczne odłączenie wszystkich jej plików.
 
 ### Uruchomienie
 
@@ -25,8 +64,8 @@ docker-compose -f "docker-compose.yml" up -d --build
 Aplikacja dostępna jest pod adresem https://web.company.com.
 
 Przykładowe dane logowania umieszczone w bazie:
-* login: admin@gmail.com
-* hasło: admin
+* login: `admin@gmail.com`
+* hasło: `admin`
 
 ### Komunikaty
 
@@ -70,32 +109,3 @@ następującego schematu:
     ...
 ]
 ```
-
-### API
-
-Każde zapytanie do serwera API musi zostać opatrzone nagłówkiem `Authorization`,
-który który stanowi zaszyfrowany token `JWT`.
-```http request
-GET /files/list?pid=pid
-```
-`pid` opcjonalne; 
-
-* brak `pid` zwróci listę wszystkich plików, 
-* podanie pid zwróci pliki przypisane do publikacji o podanym ID,
-* `pid=-1` zwróci listę plików nieprzypisanych do żadnej publikacji
-
-```http request
-GET /files/donwload?filename=filename
-POST /files/upload
-DELETE /files/delete?filename=filename
-PATCH /files/attach?filename=filename&pid=pid
-PATCH /files/detach?filename=filename
-```
-
-```http request
-GET /publications/list
-POST /publications/upload
-DELETE /publications/delete?pid=pid
-```
-
-Usunięcię publikacji powoduje automatyczne odłączenie wszystkich jej plików.
