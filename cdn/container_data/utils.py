@@ -10,7 +10,7 @@ files_db = Files()
 publications_db = Publications()
 
 
-def validate_and_decode_token(token, action_context):
+def decode_token(token, action_context):
     if token is None:
         return False, ('No token', 401)
 
@@ -21,11 +21,11 @@ def validate_and_decode_token(token, action_context):
 
     username = payload.get('username')
     if username is None:
-        return False, ('Missing username', 404)
+        return False, ('Missing username', 401)
 
     action = payload.get('action')
     if action is None:
-        return False, ('Missing action', 404)
+        return False, ('Missing action', 401)
     if action != action_context:
         return False, (
             f'Action \"{action}\" specified in the token does not match the action \"{action_context}\" expected for '

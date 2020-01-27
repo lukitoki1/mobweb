@@ -3,9 +3,10 @@
 ### Najważniejsze zmiany
 
 * Modernizacja dostępu do zasobów poprzez API - implementacja struktury
-  REST API odzwierciedlająca strukturę danych na serwerze,
+  REST API odzwierciedlającej strukturę zasobów na serwerze,
 * implementacja odpowiednich kodów oraz komunikatów błędów dla błędnych
-  danych lub problemów z API,
+  danych dostarczanych API,
+* reagowanie komunikatem na problem związany z łącznością z API,
 * ciasteczko `HttpOnly`.
   
 ### API

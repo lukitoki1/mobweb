@@ -2,7 +2,8 @@ from os import environ
 
 import flask
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, render_template, jsonify, session
+from flask import Flask, render_template, jsonify, session, url_for
+from requests import HTTPError
 from six.moves.urllib.parse import urlencode
 from werkzeug.exceptions import HTTPException
 
@@ -41,6 +42,11 @@ def handle_auth_error(ex):
     response = jsonify(message=str(ex))
     response.status_code = (ex.code if isinstance(ex, HTTPException) else 500)
     return response
+
+
+@app.errorhandler(HTTPError)
+def handle_api_downtime(ex: HTTPError):
+    return render_template('callback.html', communicate="Cannot connect to REST API.", endpoint=url_for('logout')), 503
 
 
 @app.route('/')
