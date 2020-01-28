@@ -33,9 +33,11 @@ def upload():
     if not note:
         return "No note provided", 400
 
-    users = list(map(lambda x: x.strip(), request.form.get('users', '').split(',')))
+    users = set(map(lambda x: x.strip(), request.form.get('users', '').split(',')))
+    if data in users:
+        users.remove(data)
 
-    notes_db.insert(note, data, users)
+    notes_db.insert(note, list(data), users)
     return 'Publication uploaded', 200
 
 

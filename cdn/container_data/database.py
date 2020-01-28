@@ -16,7 +16,7 @@ class Notes:
 
         self.notes.create_index([('note', pymongo.DESCENDING), ('owner', pymongo.ASCENDING)], unique=True)
 
-    def insert(self, note, owner, users):
+    def insert(self, note, owner, users: set):
         if note is '' or note is None or owner is '' or owner is None:
             return
 
