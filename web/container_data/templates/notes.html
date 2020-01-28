@@ -30,6 +30,16 @@
         </div>
     </nav>
 </div>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+                <div class="alert alert-success" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                    <span>{{ message }}</span></div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 <div class="container">
     <div class="card" style="margin-bottom: 16px;margin-top: 16px;">
         <div class="card-body bg-light">

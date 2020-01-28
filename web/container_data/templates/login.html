@@ -12,6 +12,16 @@
 </head>
 
 <body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container" style="margin-top: 16px">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                    <span>{{ message }}</span></div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 <div class="login-clean" style="background-color: rgb(255,255,255);">
     <form method="post" action="/login">
         {{ form.csrf_token }}
@@ -25,10 +35,6 @@
         <div class="form-group">{{ form.password.label }}:
             {{ form.password(class="form-control") }}
         </div>
-        {% if message %}
-            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ message }}</span></div>
-        {% endif %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Log In</button>
         </div>

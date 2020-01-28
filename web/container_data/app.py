@@ -6,7 +6,7 @@ from os import getenv
 import flask
 import jwt
 import requests
-from flask import Flask, request, make_response, render_template, url_for
+from flask import Flask, request, make_response, render_template, url_for, flash
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.exceptions import HTTPException
@@ -90,6 +90,7 @@ def upload():
     if str(response.status_code)[0] != '2':
         return render_template('message.html', message=response.content)
 
+    flash('Note added successfully')
     return redirect('notes_page')
 
 
@@ -105,10 +106,12 @@ def login():
     invalid_data_laconic_message = 'Invalid username or password'
 
     if not login_form.validate_on_submit():
-        return render_template('login.html', form=login_form, message=invalid_data_laconic_message)
+        flash(invalid_data_laconic_message, 'danger')
+        return redirect('login_page')
 
     if not users_db.check_credentials_valid(login_form.username.data, login_form.password.data):
-        return render_template('login.html', form=login_form, message=invalid_data_laconic_message)
+        flash(invalid_data_laconic_message, 'danger')
+        return redirect('login_page')
 
     session_id = sessions_db.create(login_form.username.data)
     response = redirect('notes_page')
@@ -134,6 +137,7 @@ def signup():
         return render_template('signup.html', form=signup_form)
 
     users_db.insert(signup_form.username.data, signup_form.password.data)
+    flash('Signed up successfully', 'success')
     return redirect('login_page')
 
 
@@ -156,6 +160,7 @@ def reset():
         reset_form.old_password.errors.append("Incorrect password")
         return render_template('reset.html', form=reset_form, username=username)
 
+    flash('Changed password successfully')
     return redirect('notes_page')
 
 
@@ -165,6 +170,7 @@ def logout():
     if session_id:
         sessions_db.invalidate(session_id)
 
+    flash('Logged out of the previous session', 'success')
     response = redirect("login_page")
     response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
     return response
