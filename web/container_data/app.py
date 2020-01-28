@@ -9,6 +9,7 @@ import requests
 from flask import Flask, request, make_response, render_template, url_for
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.exceptions import HTTPException
 
 from .database import Sessions, Users
 from .forms import LoginForm, SignupForm, ResetForm, NoteForm
@@ -35,6 +36,14 @@ users_db = Users(bcrypt)
 invalid_session_surpass_endpoints = ['login_page', 'login', 'signup_page', 'signup', 'logout', 'static']
 
 
+@app.errorhandler(Exception)
+def handle_error(ex):
+    response = render_template('message.html',
+                               message=f'Service is having trouble ({ex.code if isinstance(ex, HTTPException) else 500})')
+    response.status_code = (ex.code if isinstance(ex, HTTPException) else 500)
+    return response
+
+
 @app.before_request
 def check_session_valid():
     if request.endpoint in invalid_session_surpass_endpoints:
@@ -49,7 +58,7 @@ def notes_page():
     username = sessions_db.get_username(request.cookies.get('session_id'))
     status, message = fetch_notes(username)
     if not status:
-        return render_template('callback.html', message=message)
+        return render_template('message.html', message=message)
 
     return render_template('notes.html', form=note_form, username=username, notes=message)
 
@@ -62,14 +71,22 @@ def upload():
     if not note_form.validate_on_submit():
         status, message = fetch_notes(username)
         if not status:
-            return render_template('callback.html', message=message)
+            return render_template('message.html', message=message)
         return render_template('notes.html', form=note_form, username=username, notes=message)
 
-    upload_token = create_token(username, 'upload')
-    response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token}, data=request.form)
+    note_dict = note_to_dict(username, note_form)
+    for user in note_dict['users']:
+        if users_db.check_username_available(user):
+            note_form.users.errors.append('User ' + user + ' does not exist')
+            status, message = fetch_notes(username)
+            if not status:
+                return render_template('message.html', message=message)
+            return render_template('notes.html', form=note_form, username=username, notes=message)
 
+    upload_token = create_token(username, 'upload')
+    response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token}, json=json.dumps(note_dict))
     if str(response.status_code)[0] != '2':
-        return render_template('callback.html', message=response.content)
+        return render_template('message.html', message=response.content)
 
     return redirect('notes_page')
 
@@ -121,7 +138,8 @@ def signup():
 @app.route('/reset', methods=['GET'])
 def reset_page():
     reset_form = ResetForm()
-    return render_template('reset.html', form=reset_form)
+    username = sessions_db.get_username(request.cookies.get('session_id'))
+    return render_template('reset.html', form=reset_form, username=username)
 
 
 @app.route('/reset', methods=['POST'])
@@ -130,11 +148,11 @@ def reset():
     reset_form = ResetForm()
 
     if not reset_form.validate_on_submit():
-        return render_template('reset.html', form=reset_form)
+        return render_template('reset.html', form=reset_form, username=username)
 
     if not users_db.update(username, reset_form.old_password.data, reset_form.new_password.data):
         reset_form.old_password.errors.append("Incorrect password")
-        return render_template('reset.html', form=reset_form)
+        return render_template('reset.html', form=reset_form, username=username)
 
     return redirect('notes_page')
 
@@ -148,6 +166,16 @@ def logout():
     response = redirect("login_page")
     response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
     return response
+
+
+def note_to_dict(username, note_form: NoteForm):
+    note_note = note_form.note.data
+    note_users = set(map(lambda x: x.strip(), note_form.users.data.split(',')))
+    if '' in note_users:
+        note_users.remove('')
+    if username in note_users:
+        note_users.remove(username)
+    return {'note': note_note, 'owner': username, 'users': list(note_users)}
 
 
 def fetch_notes(username):

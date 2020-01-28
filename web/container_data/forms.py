@@ -11,7 +11,7 @@ class LoginForm(FlaskForm):
     password = PasswordField(
         'Password',
         [validators.Length(8, 30, message='Incorrect password length'),
-         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
+         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*+-_]).*$",
                            message="Incorrect password data")])
 
 
@@ -24,7 +24,7 @@ class SignupForm(FlaskForm):
     password = PasswordField(
         'Password',
         [validators.Length(8, 30, message='Password has to be between 8 and 30 characters long'),
-         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
+         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*+-_]).*$",
                            message="Password has to include at least one small character, one big character, one digit and one special character")]
     )
 
@@ -33,12 +33,12 @@ class ResetForm(FlaskForm):
     old_password = PasswordField(
         'Old Password',
         [validators.Length(8, 30),
-         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$")]
+         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*+-_]).*$")]
     )
     new_password = PasswordField(
         'New Password',
         [validators.Length(8, 30, message='Password has to be between 8 and 30 characters long'),
-         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
+         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*+-_]).*$",
                            message="Password has to include at least one small character, one big character, one digit and one special character")]
     )
     new_password_repeat = PasswordField(

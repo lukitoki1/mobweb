@@ -30,20 +30,12 @@ def upload():
     if not valid:
         return data
 
-    note = request.form.get('note')
+    note = json.loads(request.json)
+    app.logger.error(note)
     if not note:
         return "No note provided", 400
 
-    users = set(map(lambda x: x.strip(), request.form.get('users', '').split(',')))
-    if '' in users:
-        users.remove('')
-    if data in users:
-        users.remove(data)
-
-    app.logger.error(note)
-    app.logger.error(data)
-    app.logger.error(users)
-    notes_db.insert(note, data, list(users))
+    notes_db.insert(note['note'], note['owner'], note['users'])
     return 'Publication uploaded', 200
 
 

@@ -15,7 +15,7 @@ class Notes:
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
         self.notes = self.db.notes_page
         self.notes.create_index(
-            [('note', pymongo.ASCENDING), ('owner', pymongo.ASCENDING), ('users', pymongo.ASCENDING)], unique=True)
+            [('note', pymongo.DESCENDING), ('owner', pymongo.ASCENDING), ('users', pymongo.DESCENDING)], unique=True)
 
     def insert(self, note, owner, users):
         if note is '' or note is None or owner is '' or owner is None:
@@ -24,7 +24,8 @@ class Notes:
         try:
             self.notes.insert_one({'note': note, 'owner': owner, 'users': users, 'timestamp': datetime.utcnow()})
         except DuplicateKeyError:
-            self.notes.update_one({'note': note, 'owner': owner}, {"$set": {'timestamp': datetime.utcnow()}})
+            self.notes.update_one({'note': note, 'owner': owner, 'users': users},
+                                  {"$set": {'timestamp': datetime.utcnow()}})
 
     def list(self, user) -> list:
         if user is None:
