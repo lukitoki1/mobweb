@@ -14,12 +14,13 @@ notes_db = Notes()
 
 
 @app.route('/', methods=['GET'])
-def list():
+def get_list():
     valid, data = validate_token(request.headers.get('Authorization'), 'list')
     if not valid:
         return data
 
     notes_list = notes_db.list(data)
+    app.logger.error(notes_list)
     return json.dumps(notes_list)
 
 
@@ -34,10 +35,15 @@ def upload():
         return "No note provided", 400
 
     users = set(map(lambda x: x.strip(), request.form.get('users', '').split(',')))
+    if '' in users:
+        users.remove('')
     if data in users:
         users.remove(data)
 
-    notes_db.insert(note, list(data), users)
+    app.logger.error(note)
+    app.logger.error(data)
+    app.logger.error(users)
+    notes_db.insert(note, data, list(users))
     return 'Publication uploaded', 200
 
 

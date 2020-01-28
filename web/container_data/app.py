@@ -11,7 +11,7 @@ from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 
 from .database import Sessions, Users
-from .forms import LoginForm, SignupForm, ResetForm
+from .forms import LoginForm, SignupForm, ResetForm, NoteForm
 
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
 JWT_SECRET = getenv("JWT_SECRET")
@@ -45,22 +45,28 @@ def check_session_valid():
 
 @app.route('/', methods=['GET'])
 def notes_page():
+    note_form = NoteForm()
     username = sessions_db.get_username(request.cookies.get('session_id'))
-    list_token = create_token(username, 'list')
-    response = requests.get('http://cdn:5000/', headers={'Authorization': list_token})
+    status, message = fetch_notes(username)
+    if not status:
+        return render_template('callback.html', message=message)
 
-    if str(response.status_code)[0] != '2':
-        return render_template('callback.html', message=response.content)
-
-    notes = json.loads(response.content)
-    return render_template('notes.html', username=username, notes=notes)
+    return render_template('notes.html', form=note_form, username=username, notes=message)
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/', methods=['POST'])
 def upload():
-    username = request.cookies.get('session_id')
+    username = sessions_db.get_username(request.cookies.get('session_id'))
+    note_form = NoteForm()
+    app.logger.error(request.form)
+    if not note_form.validate_on_submit():
+        status, message = fetch_notes(username)
+        if not status:
+            return render_template('callback.html', message=message)
+        return render_template('notes.html', form=note_form, username=username, notes=message)
+
     upload_token = create_token(username, 'upload')
-    response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token})
+    response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token}, data=request.form)
 
     if str(response.status_code)[0] != '2':
         return render_template('callback.html', message=response.content)
@@ -144,13 +150,21 @@ def logout():
     return response
 
 
+def fetch_notes(username):
+    list_token = create_token(username, 'list')
+    response = requests.get('http://cdn:5000/', headers={'Authorization': list_token})
+    if str(response.status_code)[0] != '2':
+        return False, response.content
+    return True, json.loads(response.content)
+
+
 def create_token(username, action):
     exp = datetime.utcnow() + timedelta(seconds=JWT_SESSION_TIME)
     return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, 'action': action}, JWT_SECRET,
                       "HS256")
 
 
-def redirect(location):
-    response = make_response('', 303)
+def redirect(location, content=''):
+    response = make_response(content, 303)
     response.headers["Location"] = url_for(location)
     return response

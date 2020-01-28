@@ -33,22 +33,42 @@
 <div class="container">
     <div class="card" style="margin-bottom: 16px;margin-top: 16px;">
         <div class="card-body bg-light">
-            <form method="post" action="/upload">
-                <div class="form-group d-flex"><textarea
-                        class="bg-white form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill"
-                        placeholder="Note" name="note" style="min-height: 50px;height: 50px;"
-                        required="required"></textarea></div>
+            <form method="post" action="/">
+                {{ form.csrf_token }}
+                <div class="form-group d-flex">
+                    {{ form.note(
+                    class="bg-white form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill",
+                    placeholder="Note",
+                    style="min-height: 50px;height: 50px;"
+                    ) }}
+                </div>
+                <div class="form-group">
+                    {% for error in form.note.errors %}
+                        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                            <span>{{ error }}</span></div>
+                    {% endfor %}
+                </div>
                 <div class="form-group">
                     <div class="col d-flex align-items-center" style="padding-right: 0px;">
-                        <div class="custom-control custom-control-inline custom-switch"><input
-                                class="custom-control-input" type="checkbox" id="restricted" name="restricted"
-                                onchange="document.getElementById('users').disabled = !this.checked;"><label
-                                class="custom-control-label" for="restricted">Restricted</label></div>
-                        <textarea
-                                id="users" disabled="disabled"
-                                class="form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill"
-                                placeholder="Users (divided by comma)" name="users"
-                                style="height: 50px;min-height: 50px;"></textarea></div>
+                        <div class="custom-control custom-control-inline custom-switch">
+                            <input
+                                    class="custom-control-input" type="checkbox" id="restricted" name="restricted"
+                                    onchange="document.getElementById('users').disabled = !this.checked;"><label
+                                class="custom-control-label" for="restricted">Restricted</label>
+                        </div>
+                        {{ form.users(
+                        disabled="disabled",
+                        class="form-control form-control-lg d-flex float-none flex-grow-1 flex-shrink-1 flex-fill",
+                        placeholder="Users (divided by comma)",
+                        style="height: 50px;min-height: 50px;"
+                        ) }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {% for error in form.users.errors %}
+                        <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
+                            <span>{{ error }}</span></div>
+                    {% endfor %}
                 </div>
                 <div class="form-group">
                     <button class="btn btn-primary d-flex float-right" type="submit">Create Note</button>
@@ -60,8 +80,10 @@
         <div class="card" style="margin-top: 16px;margin-bottom: 16px;">
             <div class="card-body">
                 <p class="card-text" style="font-size: 24px;margin-bottom: 0px;">{{ note['note'] }}</p>
+                <p class="d-flex float-left d-lg-flex justify-content-lg-start card-text"
+                   style="font-size: 18px;margin-right: 16px;">{{ note['owner'] }}</p>
                 <p class="lead d-lg-flex justify-content-lg-start card-text"
-                   style="font-size: 18px;"><strong>{{ note['owner'] }}, </strong>{{ note['users']|join(', ') }}</p>
+                   style="font-size: 18px;">{{ note['users']|join(', ') }}</p>
             </div>
         </div>
     {% endfor %}

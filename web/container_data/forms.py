@@ -51,7 +51,8 @@ class ResetForm(FlaskForm):
 class NoteForm(FlaskForm):
     note = StringField('Note', [validators.DataRequired(message='No note provided')])
     users = StringField(
-        'Users',
+        "Users",
         [validators.Optional(),
+         validators.DataRequired(message='No users provided'),
          validators.regexp(r"^([a-zA-Z0-9,\s]+)$", message='Incorrect formatting')]
     )

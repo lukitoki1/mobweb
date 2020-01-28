@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import pymongo
+from flask import current_app
 from pymongo.errors import DuplicateKeyError
 
 MONGO_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
@@ -13,10 +14,10 @@ class Notes:
     def __init__(self):
         self.db = pymongo.MongoClient(f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOSTNAME}').db
         self.notes = self.db.notes_page
+        self.notes.create_index(
+            [('note', pymongo.ASCENDING), ('owner', pymongo.ASCENDING), ('users', pymongo.ASCENDING)], unique=True)
 
-        self.notes.create_index([('note', pymongo.DESCENDING), ('owner', pymongo.ASCENDING)], unique=True)
-
-    def insert(self, note, owner, users: set):
+    def insert(self, note, owner, users):
         if note is '' or note is None or owner is '' or owner is None:
             return
 
@@ -31,4 +32,10 @@ class Notes:
 
         query_result = self.notes.find({'$or': [{'owner': user}, {'users': user}]}, {'_id': 0}).sort(
             [('timestamp', pymongo.DESCENDING)])
-        return list(query_result)
+        notes = list(query_result)
+
+        for note in notes:
+            current_app.logger.error(note)
+            note['timestamp'] = datetime.strftime(note['timestamp'], "%d-%m-%Y %H:%M:%S")
+
+        return notes
