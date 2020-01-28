@@ -79,11 +79,13 @@
     {% for note in notes %}
         <div class="card" style="margin-top: 16px;margin-bottom: 16px;">
             <div class="card-body">
-                <p class="card-text" style="font-size: 24px;margin-bottom: 0px;">{{ note['note'] }}</p>
+                <p class="text-break card-text" style="font-size: 24px;margin-bottom: 0px;">{{ note['note'] }}</p>
                 <p class="d-flex float-left d-lg-flex justify-content-lg-start card-text"
                    style="font-size: 18px;margin-right: 16px;">{{ note['owner'] }}</p>
-                <p class="lead d-lg-flex justify-content-lg-start card-text"
+                <p class="lead text-break d-flex float-left d-lg-flex justify-content-lg-start card-text"
                    style="font-size: 18px;">{{ note['users']|join(', ') }}</p>
+                <p class="lead text-break d-flex float-right d-lg-flex justify-content-lg-start card-text"
+                   style="font-size: 18px;">{{ note['timestamp'] }}</p>
             </div>
         </div>
     {% endfor %}

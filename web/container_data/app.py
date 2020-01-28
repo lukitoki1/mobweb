@@ -23,8 +23,6 @@ app = Flask(__name__)
 app.static_folder = 'static'
 app.config.update(
     SECRET_KEY=os.urandom(24),
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_NAME='session',
     WTF_CSRF_TIME_LIMIT=None
 
 )
@@ -37,14 +35,14 @@ invalid_session_surpass_endpoints = ['login_page', 'login', 'signup_page', 'sign
 
 
 @app.errorhandler(CSRFError)
-def handle_csrf_error(e):
+def handle_csrf_error(ex):
     return render_template('message.html', message='CSRF protection blocked your request.'), 400
 
 
 @app.errorhandler(Exception)
 def handle_error(ex):
     return (render_template('message.html',
-                            message=f'Service is having trouble ({ex.code if isinstance(ex, HTTPException) else 500}).'),
+                            message=f'An error occurred ({ex.code if isinstance(ex, HTTPException) else 500}).'),
             ex.code if isinstance(ex, HTTPException) else 500)
 
 
@@ -114,7 +112,7 @@ def login():
 
     session_id = sessions_db.create(login_form.username.data)
     response = redirect('notes_page')
-    response.set_cookie("session_id", session_id, max_age=SESSION_TIME)
+    response.set_cookie("session_id", session_id, max_age=SESSION_TIME, secure=True, httponly=True)
     return response
 
 
