@@ -1,34 +1,10 @@
-import datetime
 from os import getenv
-from uuid import uuid4
 
 import redis
-from flask import current_app
 from flask_bcrypt import Bcrypt
 
 REDIS_HOST = getenv('REDIS_HOST')
 REDIS_PORT = int(getenv('REDIS_PORT'))
-
-
-class Sessions:
-    exp = datetime.timedelta(minutes=5)
-
-    def __init__(self):
-        self.db = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1, charset='utf-8', decode_responses=True)
-
-    def create(self, username):
-        session_id = str(uuid4())
-        self.db.set(session_id, username, ex=Sessions.exp)
-        return session_id
-
-    def invalidate(self, session_id):
-        self.db.delete(session_id)
-
-    def get_username(self, session_id):
-        if session_id is None:
-            return None
-        return self.db.get(session_id)
-
 
 class Users:
     def __init__(self, bcrypt: Bcrypt):
@@ -37,12 +13,9 @@ class Users:
 
     def insert(self, username, password):
         result = self.db.set(username, self.bcrypt.generate_password_hash(password))
-        current_app.logger.error('result: ', result)
 
     def update(self, username, old_password, new_password):
-        current_app.logger.error(username, old_password, new_password)
         if not self.check_credentials_valid(username, old_password):
-            current_app.logger.error('not valid')
             return False
         self.insert(username, new_password)
         return True

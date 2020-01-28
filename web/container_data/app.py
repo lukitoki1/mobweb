@@ -5,13 +5,14 @@ from os import getenv
 
 import flask
 import jwt
+import redis
 import requests
-from flask import Flask, request, make_response, render_template, url_for, flash
+from flask import Flask, request, make_response, render_template, url_for, flash, session
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.exceptions import HTTPException
 
-from .database import Sessions, Users
+from .database import Users, REDIS_HOST, REDIS_PORT
 from .forms import LoginForm, SignupForm, ResetForm, NoteForm
 
 JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
@@ -21,15 +22,21 @@ INVALIDATE = -1
 
 app = Flask(__name__)
 app.static_folder = 'static'
+
 app.config.update(
     SECRET_KEY=os.urandom(24),
-    WTF_CSRF_TIME_LIMIT=None
-
+    WTF_CSRF_TIME_LIMIT=None,
+    SESSION_TYPE='redis',
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=True,
+    SESSION_PERMANENT=False,
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=5),
+    SESSION_USE_SIGNER=True,
+    SESSION_REDIS=redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1, charset='utf-8', decode_responses=True)
 )
 bcrypt = Bcrypt(app)
 csrf = CSRFProtect(app)
 
-sessions_db = Sessions()
 users_db = Users(bcrypt)
 invalid_session_surpass_endpoints = ['login_page', 'login', 'signup_page', 'signup', 'logout', 'static']
 
@@ -50,14 +57,14 @@ def handle_error(ex):
 def check_session_valid():
     if request.endpoint in invalid_session_surpass_endpoints:
         return
-    if not sessions_db.get_username(request.cookies.get('session_id')):
+    if not session.get('username'):
         return redirect('logout')
 
 
 @app.route('/', methods=['GET'])
 def notes_page():
     note_form = NoteForm()
-    username = sessions_db.get_username(request.cookies.get('session_id'))
+    username = session.get('username')
     status, message = fetch_notes(username)
     if not status:
         return render_template('message.html', message=message)
@@ -67,7 +74,7 @@ def notes_page():
 
 @app.route('/', methods=['POST'])
 def upload():
-    username = sessions_db.get_username(request.cookies.get('session_id'))
+    username = session.get('username')
     note_form = NoteForm()
     app.logger.error(request.form)
     if not note_form.validate_on_submit():
@@ -96,6 +103,8 @@ def upload():
 
 @app.route('/login', methods=['GET'])
 def login_page():
+    if session.get('username'):
+        return redirect('notes_page')
     login_form = LoginForm()
     return render_template('login.html', form=login_form)
 
@@ -113,14 +122,14 @@ def login():
         flash(invalid_data_laconic_message, 'danger')
         return redirect('login_page')
 
-    session_id = sessions_db.create(login_form.username.data)
-    response = redirect('notes_page')
-    response.set_cookie("session_id", session_id, max_age=SESSION_TIME, secure=True, httponly=True)
-    return response
+    session['username'] = login_form.username.data
+    return redirect('notes_page')
 
 
 @app.route('/signup', methods=['GET'])
 def signup_page():
+    if session.get('username'):
+        return redirect('notes_page')
     signup_form = SignupForm()
     return flask.render_template('signup.html', form=signup_form)
 
@@ -144,13 +153,13 @@ def signup():
 @app.route('/reset', methods=['GET'])
 def reset_page():
     reset_form = ResetForm()
-    username = sessions_db.get_username(request.cookies.get('session_id'))
+    username = session.get('username')
     return render_template('reset.html', form=reset_form, username=username)
 
 
 @app.route('/reset', methods=['POST'])
 def reset():
-    username = sessions_db.get_username(request.cookies.get('session_id'))
+    username = session.get('username')
     reset_form = ResetForm()
 
     if not reset_form.validate_on_submit():
@@ -166,15 +175,8 @@ def reset():
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    session_id = request.cookies.get('session_id')
-    if session_id:
-        sessions_db.invalidate(session_id)
-
-    flash('Logged out of the previous session', 'success')
-    response = redirect("login_page")
-    response.set_cookie("session_id", "INVALIDATE", max_age=INVALIDATE)
-    return response
-
+    session.clear()
+    return redirect("login_page")
 
 def note_to_dict(username, note_form: NoteForm):
     note_note = note_form.note.data
