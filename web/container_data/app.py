@@ -1,39 +1,20 @@
 import json
-import os
 from datetime import datetime, timedelta
-from os import getenv
 
 import flask
 import jwt
-import redis
 import requests
 from flask import Flask, request, make_response, render_template, url_for, flash, session
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.exceptions import HTTPException
 
-from .database import Users, REDIS_HOST, REDIS_PORT
+from .config import FlaskConfig, JwtConfig
+from .database import Users
 from .forms import LoginForm, SignupForm, ResetForm, NoteForm
 
-JWT_SESSION_TIME = int(getenv('JWT_SESSION_TIME'))
-JWT_SECRET = getenv("JWT_SECRET")
-SESSION_TIME = int(getenv("SESSION_TIME"))
-INVALIDATE = -1
-
 app = Flask(__name__)
-app.static_folder = 'static'
-
-app.config.update(
-    SECRET_KEY=os.urandom(24),
-    WTF_CSRF_TIME_LIMIT=None,
-    SESSION_TYPE='redis',
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SECURE=True,
-    SESSION_PERMANENT=False,
-    PERMANENT_SESSION_LIFETIME=timedelta(minutes=5),
-    SESSION_USE_SIGNER=True,
-    SESSION_REDIS=redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1, charset='utf-8', decode_responses=True)
-)
+app.config.from_object(FlaskConfig)
 bcrypt = Bcrypt(app)
 csrf = CSRFProtect(app)
 
@@ -197,8 +178,9 @@ def fetch_notes(username):
 
 
 def create_token(username, action):
-    exp = datetime.utcnow() + timedelta(seconds=JWT_SESSION_TIME)
-    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, 'action': action}, JWT_SECRET,
+    exp = datetime.utcnow() + timedelta(seconds=JwtConfig.JWT_SESSION_TIME)
+    return jwt.encode({"iss": "web.company.com", "exp": exp, "username": username, 'action': action},
+                      JwtConfig.JWT_SECRET,
                       "HS256")
 
 

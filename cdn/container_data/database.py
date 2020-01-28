@@ -35,6 +35,6 @@ class Notes:
         notes = list(query_result)
 
         for note in notes:
-            note['timestamp'] = datetime.strftime(note['timestamp'], "%d-%m-%Y %H:%M:%S")
+            note['timestamp'] = datetime.strftime(note['timestamp'], "%d.%m.%Y %H:%M")
 
         return notes
