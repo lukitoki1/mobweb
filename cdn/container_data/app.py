@@ -20,7 +20,6 @@ def get_list():
         return data
 
     notes_list = notes_db.list(data)
-    app.logger.error(notes_list)
     return json.dumps(notes_list)
 
 
@@ -31,7 +30,6 @@ def upload():
         return data
 
     note = json.loads(request.json)
-    app.logger.error(note)
     if not note:
         return "No note provided", 400
 

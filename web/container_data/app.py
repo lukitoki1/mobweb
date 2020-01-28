@@ -8,7 +8,7 @@ import jwt
 import requests
 from flask import Flask, request, make_response, render_template, url_for
 from flask_bcrypt import Bcrypt
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.exceptions import HTTPException
 
 from .database import Sessions, Users
@@ -36,12 +36,16 @@ users_db = Users(bcrypt)
 invalid_session_surpass_endpoints = ['login_page', 'login', 'signup_page', 'signup', 'logout', 'static']
 
 
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return render_template('message.html', message='CSRF protection blocked your request.'), 400
+
+
 @app.errorhandler(Exception)
 def handle_error(ex):
-    response = render_template('message.html',
-                               message=f'Service is having trouble ({ex.code if isinstance(ex, HTTPException) else 500})')
-    response.status_code = (ex.code if isinstance(ex, HTTPException) else 500)
-    return response
+    return (render_template('message.html',
+                            message=f'Service is having trouble ({ex.code if isinstance(ex, HTTPException) else 500}).'),
+            ex.code if isinstance(ex, HTTPException) else 500)
 
 
 @app.before_request

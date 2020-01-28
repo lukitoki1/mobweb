@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 import pymongo
-from flask import current_app
 from pymongo.errors import DuplicateKeyError
 
 MONGO_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
@@ -36,7 +35,6 @@ class Notes:
         notes = list(query_result)
 
         for note in notes:
-            current_app.logger.error(note)
             note['timestamp'] = datetime.strftime(note['timestamp'], "%d-%m-%Y %H:%M:%S")
 
         return notes
