@@ -1,7 +1,8 @@
-from wtforms import Form, StringField, validators, PasswordField
+from flask_wtf import FlaskForm
+from wtforms import StringField, validators, PasswordField
 
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     username = StringField(
         'Username',
         [validators.Length(1, 30, message='Incorrect username length'),
@@ -14,7 +15,7 @@ class LoginForm(Form):
                            message="Incorrect password data")])
 
 
-class SignupForm(Form):
+class SignupForm(FlaskForm):
     username = StringField(
         'Username',
         [validators.Length(1, 30, message='Username has to be between 1 and 30 characters long'),
@@ -28,12 +29,11 @@ class SignupForm(Form):
     )
 
 
-class ResetForm(Form):
+class ResetForm(FlaskForm):
     old_password = PasswordField(
         'Old Password',
-        [validators.Length(8, 30, message='Incorrect password length'),
-         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$",
-                           message="Incorrect password data")]
+        [validators.Length(8, 30),
+         validators.regexp(r"^(?=.*[A-ZĄĆĘŁŃÓŚŹŻ])(?=.*[a-ząćęłńóśźż])(?=.*[0-9])(?=.*[!@#$%^&*]).*$")]
     )
     new_password = PasswordField(
         'New Password',
@@ -48,7 +48,7 @@ class ResetForm(Form):
     )
 
 
-class NoteForm(Form):
+class NoteForm(FlaskForm):
     note = StringField('Note', [validators.DataRequired(message='No note provided')])
     users = StringField(
         'Users',

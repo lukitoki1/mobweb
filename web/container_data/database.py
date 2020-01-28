@@ -3,6 +3,7 @@ from os import getenv
 from uuid import uuid4
 
 import redis
+from flask import current_app
 from flask_bcrypt import Bcrypt
 
 REDIS_HOST = getenv('REDIS_HOST')
@@ -35,10 +36,13 @@ class Users:
         self.bcrypt = bcrypt
 
     def insert(self, username, password):
-        self.db.set(username, self.bcrypt.generate_password_hash(password))
+        result = self.db.set(username, self.bcrypt.generate_password_hash(password))
+        current_app.logger.error('result: ', result)
 
     def update(self, username, old_password, new_password):
+        current_app.logger.error(username, old_password, new_password)
         if not self.check_credentials_valid(username, old_password):
+            current_app.logger.error('not valid')
             return False
         self.insert(username, new_password)
         return True
@@ -50,6 +54,6 @@ class Users:
         return True
 
     def check_username_available(self, username):
-        if not self.db.get(username):
+        if self.db.get(username):
             return False
         return True

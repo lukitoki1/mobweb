@@ -23,7 +23,7 @@ app.static_folder = 'static'
 app.config.update(
     SECRET_KEY=os.urandom(24),
     SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_NAME='session_id',
+    SESSION_COOKIE_NAME='session',
     WTF_CSRF_TIME_LIMIT=None
 
 )
@@ -49,7 +49,7 @@ def notes_page():
     list_token = create_token(username, 'list')
     response = requests.get('http://cdn:5000/', headers={'Authorization': list_token})
 
-    if str(response.status_code)[0] != 2:
+    if str(response.status_code)[0] != '2':
         return render_template('callback.html', message=response.content)
 
     notes = json.loads(response.content)
@@ -62,7 +62,7 @@ def upload():
     upload_token = create_token(username, 'upload')
     response = requests.post('http://cdn:5000/', headers={'Authorization': upload_token})
 
-    if str(response.status_code)[0] != 2:
+    if str(response.status_code)[0] != '2':
         return render_template('callback.html', message=response.content)
 
     return redirect('notes_page')
@@ -76,14 +76,14 @@ def login_page():
 
 @app.route('/login', methods=['POST'])
 def login():
-    login_form = LoginForm(request.form)
+    login_form = LoginForm()
+    invalid_data_laconic_message = 'Invalid username or password'
 
-    if not login_form.validate():
-        return render_template('login.html', form=login_form)
+    if not login_form.validate_on_submit():
+        return render_template('login.html', form=login_form, message=invalid_data_laconic_message)
 
     if not users_db.check_credentials_valid(login_form.username.data, login_form.password.data):
-        login_form.password.errors.append('Incorrect username or password')
-        return render_template('login.html', form=login_form)
+        return render_template('login.html', form=login_form, message=invalid_data_laconic_message)
 
     session_id = sessions_db.create(login_form.username.data)
     response = redirect('notes_page')
@@ -99,15 +99,16 @@ def signup_page():
 
 @app.route('/signup', methods=['POST'])
 def signup():
-    signup_form = SignupForm(request.form)
+    signup_form = SignupForm()
 
-    if not signup_form.validate():
+    if not signup_form.validate_on_submit():
         return render_template('signup.html', form=signup_form)
 
     if not users_db.check_username_available(signup_form.username.data):
         signup_form.username.errors.append('This username is not available')
         return render_template('signup.html', form=signup_form)
 
+    users_db.insert(signup_form.username.data, signup_form.password.data)
     return redirect('login_page')
 
 
@@ -120,9 +121,9 @@ def reset_page():
 @app.route('/reset', methods=['POST'])
 def reset():
     username = sessions_db.get_username(request.cookies.get('session_id'))
-    reset_form = ResetForm(request.form)
+    reset_form = ResetForm()
 
-    if not reset_form.validate():
+    if not reset_form.validate_on_submit():
         return render_template('reset.html', form=reset_form)
 
     if not users_db.update(username, reset_form.old_password.data, reset_form.new_password.data):

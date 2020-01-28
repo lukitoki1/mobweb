@@ -22,17 +22,13 @@
         </div>
         <div class="form-group">{{ form.username.label }}:
             {{ form.username(class="form-control") }}</div>
-        {% for error in form.username.errors %}
-            <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ error }}</span></div>
-        {% endfor %}
         <div class="form-group">{{ form.password.label }}:
             {{ form.password(class="form-control") }}
         </div>
-        {% for error in form.password.errors %}
+        {% if message %}
             <div class="alert alert-danger" role="alert" style="padding-right: 12px;padding-left: 12px;">
-                <span>{{ error }}</span></div>
-        {% endfor %}
+                <span>{{ message }}</span></div>
+        {% endif %}
         <div class="form-group">
             <button class="btn btn-primary btn-block" type="submit">Log In</button>
         </div>

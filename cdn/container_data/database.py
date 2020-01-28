@@ -29,5 +29,6 @@ class Notes:
         if user is None:
             return []
 
-        query_result = self.notes.find({'$or': [{'owner': user}, {'users': user}]}, {'_id': 0}).sort({'timestamp': 1})
+        query_result = self.notes.find({'$or': [{'owner': user}, {'users': user}]}, {'_id': 0}).sort(
+            [('timestamp', pymongo.DESCENDING)])
         return list(query_result)
