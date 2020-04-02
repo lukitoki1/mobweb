@@ -1,4 +1,4 @@
-### Tagi `M2..M5` - aplikacja webowa na (kolejne kroki rozwoju) na przedmiot "Programowanie aplikacji mobilnych i webowych".
+### Tagi `M2..M5` - aplikacja webowa (kolejne kroki rozwoju) na przedmiot "Programowanie aplikacji mobilnych i webowych".
 ### Tag `ochrona` - bezpieczna aplikacja webowa na przedmiot "Ochrona danych w systemach informatycznych".
 
 ## Kamień milowy M5
